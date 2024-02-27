@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project (pickup C CXX)
+project (tiny3d C CXX)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party)
