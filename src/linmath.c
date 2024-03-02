@@ -18,23 +18,27 @@ void vec2_copy(vec2 src, vec2 dst){
 }
 
 void vec2_add(vec2 a, vec2 b, vec2 dst){
-	dst[0] = a[0] + b[0];
-	dst[1] = a[1] + b[1];
+	for (int i = 0; i < 2; i++){
+		dst[i] = a[i] + b[i];
+	}
 }
 
 void vec2_sub(vec2 a, vec2 b, vec2 dst){
-	dst[0] = a[0] - b[0];
-	dst[1] = a[1] - b[1];
+	for (int i = 0; i < 2; i++){
+		dst[i] = a[i] - b[i];
+	}
 }
 
 void vec2_scale(vec2 a, float t, vec2 dst){
-	dst[0] = a[0] * t;
-	dst[1] = a[1] * t;
+	for (int i = 0; i < 2; i++){
+		dst[i] = a[i] * t;
+	}
 }
 
 void vec2_lerp(vec2 a, vec2 b, float t, vec2 dst){
-	dst[0] = LERP(a[0],b[0],t);
-	dst[1] = LERP(a[1],b[1],t);
+	for (int i = 0; i < 2; i++){
+		dst[i] = LERP(a[i],b[i],t);
+	}
 }
 
 float vec2_dot(vec2 a, vec2 b){
@@ -64,46 +68,46 @@ void vec3_copy(vec3 src, vec3 dst){
 }
 
 void vec3_add(vec3 a, vec3 b, vec3 dst){
-	dst[0] = a[0] + b[0];
-	dst[1] = a[1] + b[1];
-	dst[2] = a[2] + b[2];
+	for (int i = 0; i < 3; i++){
+		dst[i] = a[i] + b[i];
+	}
 }
 
 void vec3_sub(vec3 a, vec3 b, vec3 dst){
-	dst[0] = a[0] - b[0];
-	dst[1] = a[1] - b[1];
-	dst[2] = a[2] - b[2];
+	for (int i = 0; i < 3; i++){
+		dst[i] = a[i] - b[i];
+	}
 }
 
 void vec3_negate(vec3 v, vec3 dst){
-	dst[0] = -v[0];
-	dst[1] = -v[1];
-	dst[2] = -v[2];
+	for (int i = 0; i < 3; i++){
+		dst[i] = -v[i];
+	}
 }
 
 void vec3_scale(vec3 v, float s, vec3 dst){
-	dst[0] = v[0] * s;
-	dst[1] = v[1] * s;
-	dst[2] = v[2] * s;
+	for (int i = 0; i < 3; i++){
+		dst[i] = v[i] * s;
+	}
 }
 
 void vec3_mul(vec3 a, vec3 b, vec3 dst){
-	dst[0] = a[0] * b[0];
-	dst[1] = a[1] * b[1];
-	dst[2] = a[2] * b[2];
+	for (int i = 0; i < 3; i++){
+		dst[i] = a[i] * b[i];
+	}
 }
 
 void vec3_div(vec3 a, vec3 b, vec3 dst){
-	dst[0] = a[0] / b[0];
-	dst[1] = a[1] / b[1];
-	dst[2] = a[2] / b[2];
+	for (int i = 0; i < 3; i++){
+		dst[i] = a[i] / b[i];
+	}
 }
 
 void vec3_divs(vec3 a, float s, vec3 dst){
 	float invS = 1.0f / s;
-	dst[0] = a[0] * invS;
-	dst[1] = a[1] * invS;
-	dst[2] = a[2] * invS;
+	for (int i = 0; i < 3; i++){
+		dst[i] = a[i] * invS;
+	}
 }
 
 float vec3_dot(vec3 a, vec3 b){
@@ -141,9 +145,9 @@ void vec3_set_length(vec3 v, float l, vec3 dst){
 }
 
 void vec3_lerp(vec3 a, vec3 b, float t, vec3 dst){
-	dst[0] = LERP(a[0],b[0],t);
-	dst[1] = LERP(a[1],b[1],t);
-	dst[2] = LERP(a[2],b[2],t);
+	for (int i = 0; i < 3; i++){
+		dst[i] = LERP(a[i],b[i],t);
+	}
 }
 
 void euler_wrap(vec3 e, vec3 dst){
@@ -156,50 +160,50 @@ void euler_wrap(vec3 e, vec3 dst){
 	}
 }
 
-void vec4_copy(vec4 dst, vec4 src){
+void vec4_copy(vec4 src, vec4 dst){
 	memcpy(dst,src,sizeof(vec4));
 }
 
 void vec4_add(vec4 a, vec4 b, vec4 dst){
-	dst[0] = a[0] + b[0];
-	dst[1] = a[1] + b[1];
-	dst[2] = a[2] + b[2];
-	dst[3] = a[3] + b[3];
+	for (int i = 0; i < 4; i++){
+		dst[i] = a[i] + b[i];
+	}
 }
 
 void vec4_sub(vec4 a, vec4 b, vec4 dst){
-	dst[0] = a[0] - b[0];
-	dst[1] = a[1] - b[1];
-	dst[2] = a[2] - b[2];
-	dst[3] = a[3] - b[3];
+	for (int i = 0; i < 4; i++){
+		dst[i] = a[i] - b[i];
+	}
 }
 
 void vec4_negate(vec4 v, vec4 dst){
-	dst[0] = -v[0];
-	dst[1] = -v[1];
-	dst[2] = -v[2];
-	dst[3] = -v[3];
+	for (int i = 0; i < 4; i++){
+		dst[i] = -v[i];
+	}
 }
 
 void vec4_scale(vec4 v, float s, vec4 dst){
-	dst[0] = v[0] * s;
-	dst[1] = v[1] * s;
-	dst[2] = v[2] * s;
-	dst[3] = v[3] * s;
+	for (int i = 0; i < 4; i++){
+		dst[i] = v[i] * s;
+	}
 }
 
 void vec4_mul(vec4 a, vec4 b, vec4 dst){
-	dst[0] = a[0] * b[0];
-	dst[1] = a[1] * b[1];
-	dst[2] = a[2] * b[2];
-	dst[3] = a[3] * b[3];
+	for (int i = 0; i < 4; i++){
+		dst[0] = a[i] * b[i];
+	}
 }
 
 void vec4_div(vec4 a, vec4 b, vec4 dst){
-	dst[0] = a[0] / b[0];
-	dst[1] = a[1] / b[1];
-	dst[2] = a[2] / b[2];
-	dst[3] = a[3] / b[3];
+	for (int i = 0; i < 4; i++){
+		dst[i] = a[i] / b[i];
+	}
+}
+
+void vec4_lerp(vec4 a, vec4 b, float t, vec4 dst){
+	for (int i = 0; i < 4; i++){
+		dst[i] = LERP(a[i],b[i],t);
+	}
 }
 
 float vec4_dot(vec4 a, vec4 b){
@@ -279,14 +283,14 @@ void quat_to_mat4(vec4 q, mat4 dst){
 	dst[3][3] = 1.0f;
 }
 
-void mat4_copy(mat4 dst, mat4 src){
+void mat4_copy(mat4 src, mat4 dst){
 	memcpy(dst,src,sizeof(mat4));
 }
 
 void mat4_mul(mat4 a, mat4 b, mat4 dst){
 	mat4 ac, bc;
-	mat4_copy(ac,a);
-	mat4_copy(bc,b);
+	mat4_copy(a,ac);
+	mat4_copy(b,bc);
 	for (int i = 0; i < 4; i++){
 		for (int j = 0; j < 4; j++){
 			dst[i][j] = ac[0][j]*bc[i][0] + ac[1][j]*bc[i][1] + ac[2][j]*bc[i][2] + ac[3][j]*bc[i][3];
@@ -296,7 +300,7 @@ void mat4_mul(mat4 a, mat4 b, mat4 dst){
 
 void mat4_mul_vec4(mat4 m, vec4 v, vec4 dst){
 	vec4 vc;
-	vec4_copy(vc,v);
+	vec4_copy(v,vc);
 	for (int i = 0; i < 4; i++){
 		dst[i] = m[0][i]*vc[0] + m[1][i]*vc[1] + m[2][i]*vc[2] + m[3][i]*vc[3];
 	}
@@ -325,47 +329,17 @@ void mat4_identity(mat4 m){
 }
 
 void mat4_scale_3(mat4 m, vec3 s){
+	mat4_identity(m);
 	m[0][0] = s[0];
-	m[0][1] = 0;
-	m[0][2] = 0;
-	m[0][3] = 0;
-
-	m[1][0] = 0;
 	m[1][1] = s[1];
-	m[1][2] = 0;
-	m[1][3] = 0;
-
-	m[2][0] = 0;
-	m[2][1] = 0;
 	m[2][2] = s[2];
-	m[2][3] = 0;
-
-	m[3][0] = 0;
-	m[3][1] = 0;
-	m[3][2] = 0;
-	m[3][3] = 1;
 }
 
 void mat4_translate(mat4 m, vec3 t){
-	m[0][0] = 1;
-	m[0][1] = 0;
-	m[0][2] = 0;
-	m[0][3] = 0;
-
-	m[1][0] = 0;
-	m[1][1] = 1;
-	m[1][2] = 0;
-	m[1][3] = 0;
-
-	m[2][0] = 0;
-	m[2][1] = 0;
-	m[2][2] = 1;
-	m[2][3] = 0;
-
+	mat4_identity(m);
 	m[3][0] = t[0];
 	m[3][1] = t[1];
 	m[3][2] = t[2];
-	m[3][3] = 1;
 }
 
 void mat4_rotate(mat4 m, vec3 a, float r){
@@ -425,75 +399,39 @@ void mat4_rotate_x(mat4 m, float r){
 	float c = cosf(r);
 	float s = sinf(r);
 
-	m[0][0] = 1;
-	m[0][1] = 0;
-	m[0][2] = 0;
-	m[0][3] = 0;
+	mat4_identity(m);
 
-	m[1][0] = 0;
 	m[1][1] = c;
 	m[1][2] = s;
-	m[1][3] = 0;
-
-	m[2][0] = 0;
+	
 	m[2][1] = -s;
 	m[2][2] = c;
-	m[2][3] = 0;
-
-	m[3][0] = 0;
-	m[3][1] = 0;
-	m[3][2] = 0;
-	m[3][3] = 1;
 }
 
 void mat4_rotate_y(mat4 m, float r){
 	float c = cosf(r);
 	float s = sinf(r);
 
-	m[0][0] = c;
-	m[0][1] = 0;
-	m[0][2] = -s;
-	m[0][3] = 0;
+	mat4_identity(m);
 
-	m[1][0] = 0;
-	m[1][1] = 1;
-	m[1][2] = 0;
-	m[1][3] = 0;
+	m[0][0] = c;
+	m[0][2] = -s;
 
 	m[2][0] = s;
-	m[2][1] = 0;
 	m[2][2] = c;
-	m[2][3] = 0;
-
-	m[3][0] = 0;
-	m[3][1] = 0;
-	m[3][2] = 0;
-	m[3][3] = 1;
 }
 
 void mat4_rotate_z(mat4 m, float r){
 	float c = cosf(r);
 	float s = sinf(r);
 
+	mat4_identity(m);
+
 	m[0][0] = c;
 	m[0][1] = s;
-	m[0][2] = 0;
-	m[0][3] = 0;
 
 	m[1][0] = -s;
 	m[1][1] = c;
-	m[1][2] = 0;
-	m[1][3] = 0;
-
-	m[2][0] = 0;
-	m[2][1] = 0;
-	m[2][2] = 1;
-	m[2][3] = 0;
-
-	m[3][0] = 0;
-	m[3][1] = 0;
-	m[3][2] = 0;
-	m[3][3] = 1;
 }
 
 void mat4_ortho_rh_no(mat4 m, float left, float right, float bottom, float top, float nearZ, float farZ){

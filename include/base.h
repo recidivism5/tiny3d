@@ -43,6 +43,27 @@
 	} while (0)
 #endif
 
+extern char *assertPath;
+#if _DEBUG
+#define ASSERT_FILE(cnd)\
+	do {\
+		if (!(cnd)){\
+			fprintf(stderr,"Assert failed:\nFile: %s\nLine: %d\nCondition: %s\nFailed to load file: %s\n",FILENAME,__LINE__,#cnd,assertPath);\
+			debug_break();\
+			exit(1);\
+		}\
+	} while (0)
+#else
+#define ASSERT_FILE(cnd)\
+	do {\
+		if (!(cnd)){\
+			fatal_error("Assert failed:\nFile: %s\nLine: %d\nCondition: %s\nFailed to load file: %s",FILENAME,__LINE__,#cnd,assertPath);\
+			exit(1);\
+		}\
+	} while (0)
+#endif
+
+
 #if _DEBUG
 #define SDL_ASSERT(cnd)\
 	do {\

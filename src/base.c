@@ -1,6 +1,8 @@
 #include <base.h>
 #include <whereami.h>
 
+char *assertPath;
+
 static void (*error_callback)(void);
 void set_error_callback(void (*func)(void)){
 	error_callback = func;
@@ -78,17 +80,15 @@ unsigned char *load_file(int *size, char *format, ...){
 	va_list args;
 	va_start(args,format);
 
-	char *path = local_path_to_absolute_internal(format,args);
-	FILE *f = fopen(path,"rb");
-	if (!f){
-		fatal_error("Could not open file: %s",path);
-	}
+	assertPath = local_path_to_absolute_internal(format,args);
+	FILE *f = fopen(assertPath,"rb");
+	ASSERT_FILE(f);
 	fseek(f,0,SEEK_END);
 	long len = ftell(f);
-	ASSERT(len > 0);
+	ASSERT_FILE(len > 0);
 	fseek(f,0,SEEK_SET);
 	char *buf = malloc(len);
-	ASSERT(buf);
+	ASSERT_FILE(buf);
 	fread(buf,1,len,f);
 	fclose(f);
 
@@ -103,17 +103,15 @@ char *load_file_as_cstring(char *format, ...){
 	va_list args;
 	va_start(args,format);
 
-	char *path = local_path_to_absolute_internal(format,args);
-	FILE *f = fopen(path,"rb");
-	if (!f){
-		fatal_error("Could not open file: %s",path);
-	}
+	assertPath = local_path_to_absolute_internal(format,args);
+	FILE *f = fopen(assertPath,"rb");
+	ASSERT_FILE(f);
 	fseek(f,0,SEEK_END);
 	long len = ftell(f);
-	ASSERT(len > 0);
+	ASSERT_FILE(len > 0);
 	fseek(f,0,SEEK_SET);
 	char *str = malloc(len+1);
-	ASSERT(str);
+	ASSERT_FILE(str);
 	fread(str,1,len,f);
 	str[len] = 0;
 	fclose(f);

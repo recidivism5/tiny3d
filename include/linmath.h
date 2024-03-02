@@ -61,13 +61,14 @@ void vec3_lerp(vec3 a, vec3 b, float t, vec3 dst);
 
 void euler_wrap(vec3 e, vec3 dst);
 
-void vec4_copy(vec4 dst, vec4 src);
+void vec4_copy(vec4 src, vec4 dst);
 void vec4_add(vec4 a, vec4 b, vec4 dst);
 void vec4_sub(vec4 a, vec4 b, vec4 dst);
 void vec4_negate(vec4 v, vec4 dst);
 void vec4_scale(vec4 v, float s, vec4 dst);
 void vec4_mul(vec4 a, vec4 b, vec4 dst);
 void vec4_div(vec4 a, vec4 b, vec4 dst);
+void vec4_lerp(vec4 a, vec4 b, float t, vec4 dst);
 float vec4_dot(vec4 a, vec4 b);
 float vec4_length(vec4 v);
 
@@ -75,7 +76,7 @@ void quat_identity(vec4 q);
 void quat_slerp(vec4 a, vec4 b, float t, vec4 dst);
 void quat_to_mat4(vec4 q, mat4 dst);
 
-void mat4_copy(mat4 dst, mat4 src);
+void mat4_copy(mat4 src, mat4 dst);
 void mat4_mul(mat4 a, mat4 b, mat4 dst);
 void mat4_mul_vec4(mat4 m, vec4 v, vec4 dst);
 void mat4_identity(mat4 m);
