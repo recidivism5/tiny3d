@@ -154,13 +154,6 @@ void draw_bmf(BMF *b){
 					if (nz < 0.0f){
 						goto L0; //back face cull
 					}
-					if (
-						cv[0].position[2] >= depthBuffer[scrpos[0][1]*SCREEN_WIDTH + scrpos[0][0]] &&
-						cv[j].position[2] >= depthBuffer[scrpos[j][1]*SCREEN_WIDTH + scrpos[j][0]] &&
-						cv[j+1].position[2] >= depthBuffer[scrpos[j+1][1]*SCREEN_WIDTH + scrpos[j+1][0]]
-					){
-						continue; //vertex depth cull
-					}
 					ivec2 smin, smax;
 					for (int k = 0; k < 2; k++){
 						smin[k] = MIN(MIN(scrpos[0][k],scrpos[j][k]),scrpos[j+1][k]);
@@ -169,13 +162,26 @@ void draw_bmf(BMF *b){
 					ivec2 p;
 					for (p[1] = smin[1]; p[1] <= smax[1]; p[1]++){
 						for (p[0] = smin[0]; p[0] <= smax[0]; p[0]++){
-							ivec3 bary = {
-								orient2d(scrpos[j],scrpos[j+1],p),
-								orient2d(scrpos[j+1],scrpos[0],p),
-								orient2d(scrpos[0],scrpos[j],p)
+							vec3 bary = {
+								(float)orient2d(scrpos[j],scrpos[j+1],p),
+								(float)orient2d(scrpos[j+1],scrpos[0],p),
+								(float)orient2d(scrpos[0],scrpos[j],p)
 							};
 							if (bary[0] >= 0 && bary[1] >= 0 && bary[2] >= 0){
-								screen[p[1]*SCREEN_WIDTH+p[0]].w = 0xffffffff;
+								float sum = bary[0]+bary[1]+bary[2];
+								for (int k = 0; k < 3; k++){
+									bary[k] /= sum;
+								}
+								float depth = 
+									cv[0].position[2] * bary[0] +
+									cv[j].position[2] * bary[1] +
+									cv[j+1].position[2] * bary[2];
+								if (depth < depthBuffer[p[1]*SCREEN_WIDTH+p[0]]){
+									depthBuffer[p[1]*SCREEN_WIDTH+p[0]] = depth;
+									screen[p[1]*SCREEN_WIDTH+p[0]].r = (int)(bary[0]*255);
+									screen[p[1]*SCREEN_WIDTH+p[0]].g = (int)(bary[1]*255);
+									screen[p[1]*SCREEN_WIDTH+p[0]].b = (int)(bary[2]*255);
+								}
 							}
 						}
 					}
