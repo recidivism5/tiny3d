@@ -79,6 +79,8 @@ void quat_to_mat4(vec4 q, mat4 dst);
 void mat4_copy(mat4 src, mat4 dst);
 void mat4_mul(mat4 a, mat4 b, mat4 dst);
 void mat4_mul_vec4(mat4 m, vec4 v, vec4 dst);
+void mat4_mul_vec3_pos(mat4 m, vec3 v, vec4 dst);
+void mat4_mul_vec3_dir(mat4 m, vec3 v, vec3 dst);
 void mat4_identity(mat4 m);
 void mat4_scale_3(mat4 m, vec3 s);
 void mat4_translate(mat4 m, vec3 t);

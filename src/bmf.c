@@ -12,7 +12,7 @@ void load_bmf(BMF *b, char *path){
     for (Image *t = b->textures; t < b->textures+b->textureCount; t++){
         int size, comp;
         ASSERT_FILE(1 == fread(&size,sizeof(size),1,f));
-        t->pixels = stbi_load_from_file(f,&t->width,&t->height,&comp,4); //UB: unknown if stb is fault tolerant. I don't think it is.
+        t->pixels = (Color *)stbi_load_from_file(f,&t->width,&t->height,&comp,4); //UB: unknown if stb is fault tolerant. I don't think it is.
         ASSERT_FILE(t->pixels);
     }
     ASSERT_FILE(1 == fread(&b->objectCount,sizeof(b->objectCount),1,f));

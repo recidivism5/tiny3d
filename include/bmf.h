@@ -9,6 +9,12 @@ typedef struct {
 } Vertex;
 
 typedef struct {
+    vec4 position;
+    vec3 normal;
+    vec2 uv;
+} ClipVertex;
+
+typedef struct {
     int posnorm, uv;
 } VertexIndex;
 

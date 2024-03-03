@@ -306,6 +306,18 @@ void mat4_mul_vec4(mat4 m, vec4 v, vec4 dst){
 	}
 }
 
+void mat4_mul_vec3_pos(mat4 m, vec3 v, vec4 dst){
+	for (int i = 0; i < 4; i++){
+		dst[i] = m[0][i]*v[0] + m[1][i]*v[1] + m[2][i]*v[2] + m[3][i]*1.0f;
+	}
+}
+
+void mat4_mul_vec3_dir(mat4 m, vec3 v, vec3 dst){
+	for (int i = 0; i < 3; i++){
+		dst[i] = m[0][i]*v[0] + m[1][i]*v[1] + m[2][i]*v[2];
+	}
+}
+
 void mat4_identity(mat4 m){
 	m[0][0] = 1;
 	m[0][1] = 0;

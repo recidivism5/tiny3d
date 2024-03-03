@@ -13,7 +13,7 @@ typedef struct {
 Color screen[SCREEN_WIDTH*SCREEN_HEIGHT];
 float depthBuffer[SCREEN_WIDTH*SCREEN_HEIGHT];
 
-mat4 projection, modelView[32], tempMat;
+mat4 project, modelView[32], modelViewProject;
 int mvIndex = 0;
 
 Color currentColor;
@@ -23,11 +23,12 @@ int vcount = 0;
 ///////////////////////////////////////// code:
 
 void perspective(float fovy, float aspect, float nearZ, float farZ){
-	mat4_persp_rh_no(projection,fovy,aspect,nearZ,farZ);
+	mat4_persp_rh_no(project,fovy,aspect,nearZ,farZ);
 }
 
 void mv_apply(){
-	mat4_mul(modelView[mvIndex],tempMat,modelView[mvIndex]);
+	mat4_mul(modelView[mvIndex],modelViewProject,modelView[mvIndex]);
+	mat4_mul(project,modelView[mvIndex],modelViewProject);
 }
 
 void load_identity(){
@@ -35,12 +36,12 @@ void load_identity(){
 }
 
 void translate(float x, float y, float z){
-	mat4_translate(tempMat,(vec3){x,y,z});
+	mat4_translate(modelViewProject,(vec3){x,y,z});
 	mv_apply();
 }
 
 void rotate(float x, float y, float z, float angle){
-	mat4_rotate(tempMat,(vec3){x,y,z},angle);
+	mat4_rotate(modelViewProject,(vec3){x,y,z},angle);
 	mv_apply();
 }
 
@@ -57,30 +58,43 @@ void line(int x0, int y0, int x1, int y1, Color color){
 	}
 }
 
-void clip(vec4 *vin, int cin, vec4 *vout, int *cout, int axis, float coef){
-	cout[0] = 0;
-	vec4 *prev = vin+cin-1;
-	bool prevInside = prev[0][axis]*coef <= prev[0][3];
+void clip_textured(ClipVertex *vin, int cin, ClipVertex *vout, int *cout, int axis, float coef){
+	*cout = 0;
+	ClipVertex *prev = vin+cin-1;
+	bool prevInside = prev->position[axis]*coef <= prev->position[3];
 	for (int i = 0; i < cin; i++){
-		vec4 *cur = vin+i;
-		bool curInside = cur[0][axis]*coef <= cur[0][3];
-
+		ClipVertex *cur = vin+i;
+		bool curInside = cur->position[axis]*coef <= cur->position[3];
+		
 		if (prevInside ^ curInside){
-			float p = prev[0][3] - prev[0][axis]*coef;
+			float p = prev->position[3] - prev->position[axis]*coef;
+			float lerpAmt = p / (p - (cur->position[3] - cur->position[axis]*coef));
 			vec4_lerp(
-				(float *)prev,
-				(float *)cur,
-				p / (p - (cur[0][3] - cur[0][axis]*coef)),
-				(float *)vout
+				(float *)prev->position,
+				(float *)cur->position,
+				lerpAmt,
+				(float *)vout->position
+			);
+			vec3_lerp(
+				(float *)prev->normal,
+				(float *)cur->normal,
+				lerpAmt,
+				(float *)vout->normal
+			);
+			vec2_lerp(
+				(float *)prev->uv,
+				(float *)cur->uv,
+				lerpAmt,
+				(float *)vout->uv
 			);
 			vout++;
-			cout[0]++;
+			(*cout)++;
 		}
 
 		if (curInside){
-			vec4_copy((float *)cur,(float *)vout);
+			*vout = *cur;
 			vout++;
-			cout[0]++;
+			(*cout)++;
 		}
 
 		prev = cur;
@@ -88,79 +102,86 @@ void clip(vec4 *vin, int cin, vec4 *vout, int *cout, int axis, float coef){
 	}
 }
 
-bool clip_axis(vec4 *v, int *c, int axis){
-	static vec4 b[6];
+bool clip_axis_textured(ClipVertex *v, int *c, int axis){
+	static ClipVertex b[6];
 	int bc = 0;
-	clip(v,*c,b,&bc,axis,1.0f);
+	clip_textured(v,*c,b,&bc,axis,1.0f);
 	if (!bc){
 		return false;
 	}
 	*c = 0;
-	clip(b,bc,v,c,axis,-1.0f);
+	clip_textured(b,bc,v,c,axis,-1.0f);
 	return (*c) > 0;
 }
 
-void vertex(float x, float y, float z){
-	ASSERT(vcount < 3);
-	verts[vcount][0] = x;
-	verts[vcount][1] = y;
-	verts[vcount][2] = z;
-	verts[vcount][3] = 1.0f;
-	vcount++;
-	if (vcount == 3){
-		vcount = 0;
-		static vec4 cv[6];
-		int cvc = 3;
-		mat4_mul(projection,modelView[mvIndex],tempMat);
-		for (int i = 0; i < 3; i++){
-			mat4_mul_vec4(tempMat,verts[i],cv[i]);
-		}
-		if (
-			clip_axis(cv,&cvc,0) &&
-			clip_axis(cv,&cvc,1) &&
-			clip_axis(cv,&cvc,2)
-		){
-			for (int i = 0; i < cvc; i++){
-				float x = cv[i][0]/cv[i][3];
-				float y = cv[i][1]/cv[i][3];
-
-				int sx = (int)roundf((1.0f + x) * 0.5f * ((float)SCREEN_WIDTH-1));
-				int sy = (int)roundf((1.0f + -y) * 0.5f * ((float)SCREEN_HEIGHT-1));
-				screen[sy*SCREEN_WIDTH+sx].w = 0xffffffff;
-			}
-		}
-	}
-}
-
-void draw_triangle(Vertex *v, vec2 *uvs){
-	static vec4 cv[6];
-	int cvc = 3;
-	mat4_mul(projection,modelView[mvIndex],tempMat);
-	for (int i = 0; i < 3; i++){
-		mat4_mul_vec4(tempMat,v[i].position,cv[i]);
-	}
-	if (
-		clip_axis(cv,&cvc,0) &&
-		clip_axis(cv,&cvc,1) &&
-		clip_axis(cv,&cvc,2)
-	){
-		for (int i = 0; i < cvc; i++){
-			float x = cv[i][0]/cv[i][3];
-			float y = cv[i][1]/cv[i][3];
-
-			int sx = (int)roundf((1.0f + x) * 0.5f * ((float)SCREEN_WIDTH-1));
-			int sy = (int)roundf((1.0f + -y) * 0.5f * ((float)SCREEN_HEIGHT-1));
-			screen[sy*SCREEN_WIDTH+sx].w = 0xffffffff;
-		}
-	}
+int orient2d(ivec2 a, ivec2 b, ivec2 c){
+	return (b[0]-a[0])*(c[1]-a[1]) - (b[1]-a[1])*(c[0]-a[0]);
 }
 
 void draw_bmf(BMF *b){
+	ClipVertex cv[6];
+	ivec2 scrpos[6];
+	int cvc;
 	Object *o = b->objects;
 	for (Trigroup *t = o->trigroups; t < o->trigroups+o->trigroupCount; t++){
 		for (VertexIndex *i = t->vertexIndices; i < t->vertexIndices+t->vertexIndexCount; i+=3){
-			o->vertices[i[0].posnorm];
-			o->uvs[i[0].uv];
+			cvc = 3;
+			for (int j = 0; j < 3; j++){
+				Vertex *v = o->vertices+i[j].posnorm;
+				vec2 *uv = o->uvs+i[j].uv;
+				mat4_mul_vec3_pos(modelViewProject,v->position,cv[j].position);
+				mat4_mul_vec3_dir(modelView[mvIndex],v->normal,cv[j].normal);
+				vec2_copy(uv[j],cv[j].uv);
+			}
+			if (
+				clip_axis_textured(cv,&cvc,0) &&
+				clip_axis_textured(cv,&cvc,1) &&
+				clip_axis_textured(cv,&cvc,2)
+			){
+				for (int j = 0; j < cvc; j++){
+					for (int k = 0; k < 3; k++){
+						cv[j].position[k] /= cv[j].position[3];
+					}
+					cv[j].position[3] = 1.0f;
+
+					scrpos[j][0] = (int)roundf((1.0f + cv[j].position[0]) * 0.5f * ((float)SCREEN_WIDTH-1));
+					scrpos[j][1] = (int)roundf((1.0f + cv[j].position[1]) * 0.5f * ((float)SCREEN_HEIGHT-1));
+				}
+				for (int j = 1; j < cvc-1; j++){
+					float nz = 
+						(cv[j].position[0]-cv[0].position[0])*(cv[j+1].position[1]-cv[0].position[1]) - 
+						(cv[j].position[1]-cv[0].position[1])*(cv[j+1].position[0]-cv[0].position[0]);
+					if (nz < 0.0f){
+						goto L0; //back face cull
+					}
+					if (
+						cv[0].position[2] >= depthBuffer[scrpos[0][1]*SCREEN_WIDTH + scrpos[0][0]] &&
+						cv[j].position[2] >= depthBuffer[scrpos[j][1]*SCREEN_WIDTH + scrpos[j][0]] &&
+						cv[j+1].position[2] >= depthBuffer[scrpos[j+1][1]*SCREEN_WIDTH + scrpos[j+1][0]]
+					){
+						continue; //vertex depth cull
+					}
+					ivec2 smin, smax;
+					for (int k = 0; k < 2; k++){
+						smin[k] = MIN(MIN(scrpos[0][k],scrpos[j][k]),scrpos[j+1][k]);
+						smax[k] = MAX(MAX(scrpos[0][k],scrpos[j][k]),scrpos[j+1][k]);
+					}
+					ivec2 p;
+					for (p[1] = smin[1]; p[1] <= smax[1]; p[1]++){
+						for (p[0] = smin[0]; p[0] <= smax[0]; p[0]++){
+							ivec3 bary = {
+								orient2d(scrpos[j],scrpos[j+1],p),
+								orient2d(scrpos[j+1],scrpos[0],p),
+								orient2d(scrpos[0],scrpos[j],p)
+							};
+							if (bary[0] >= 0 && bary[1] >= 0 && bary[2] >= 0){
+								screen[p[1]*SCREEN_WIDTH+p[0]].w = 0xffffffff;
+							}
+						}
+					}
+				}
+			}
+			L0:;
 		}
 	}
 }
@@ -243,13 +264,15 @@ int SDL_main(int argc, char* argv[]){
 		mx = (int)lx;
 		my = (int)ly;
 
-		memset(screen,0,sizeof(screen));
+		for (int i = 0; i < SCREEN_WIDTH*SCREEN_HEIGHT; i++){
+			screen[i].w = 0;
+			depthBuffer[i] = 1.0f;
+		}
 		perspective(0.5f*(float)M_PI,(float)SCREEN_WIDTH/SCREEN_HEIGHT,0.01f,1000.0f);
 		load_identity();
-		translate(2*sinf(seconds),0,0);
-		vertex(0,0,-2);
-		vertex(1.5f,0.5f,-2);
-		vertex(1,1,-2);
+		translate(0,0,-1);
+		rotate(0,1,0,seconds);
+		draw_bmf(&banana);
 
 		SDL_SetRenderDrawColor(renderer, 0xFF, 0x00, 0xFF, 0xFF);
 
@@ -257,7 +280,7 @@ int SDL_main(int argc, char* argv[]){
 
 		SDL_UpdateTexture(screenTexture,0,screen,SCREEN_WIDTH*sizeof(*screen));
 
-		SDL_RenderCopy(renderer,screenTexture,0,0);
+		SDL_RenderCopyEx(renderer,screenTexture,0,0,0,0,SDL_FLIP_VERTICAL);
 
 		SDL_RenderPresent(renderer);
 	}
