@@ -2,20 +2,12 @@ cmake_minimum_required(VERSION 3.5)
 project (tiny3d C CXX)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party)
-
-add_subdirectory(third_party/sdl)
-include_directories(third_party/sdl/include)
-
-add_subdirectory(third_party/stb_image)
-
-add_subdirectory(third_party/stb_vorbis)
-
+include_directories(third_party/debugbreak)
 include_directories(third_party/tinydir)
 
 add_subdirectory(third_party/whereami)
-
-include_directories(third_party/debugbreak)
+add_subdirectory(third_party/qoa)
+add_subdirectory(third_party/qoi)
 
 include_directories(include)
 file(GLOB_RECURSE SRC CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c" "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h")
@@ -25,6 +17,7 @@ if(MSVC)
 	set_target_properties(
 		${PROJECT_NAME}
 		PROPERTIES
+			LINK_FLAGS "dxguid.lib d3d11.lib d3dcompiler.lib dwmapi.lib"
 			LINK_FLAGS_DEBUG "/SUBSYSTEM:CONSOLE"
 			LINK_FLAGS_RELEASE "/SUBSYSTEM:windows /ENTRY:mainCRTStartup"
 			LINK_FLAGS_RELWITHDEBINFO "/SUBSYSTEM:windows /ENTRY:mainCRTStartup"
@@ -32,7 +25,7 @@ if(MSVC)
 	)
 endif()
 
-target_link_libraries(${PROJECT_NAME} SDL2-static SDL2main stb_image stb_vorbis whereami)
+target_link_libraries(${PROJECT_NAME} whereami qoa qoi)
 if( MSVC )
 	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 	if(${CMAKE_VERSION} VERSION_LESS "3.6.0") 

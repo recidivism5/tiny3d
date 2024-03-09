@@ -1,0 +1,1 @@
+void open_window(int width, int height, unsigned int *pixels);

@@ -7,7 +7,6 @@
 #include <stdarg.h>
 #include <string.h>
 #include <time.h>
-#include <SDL.h>
 #include <debugbreak.h>
 
 #undef near //fuck deez macros lol
@@ -63,27 +62,7 @@ extern char *assertPath;
 	} while (0)
 #endif
 
-
-#if _DEBUG
-#define SDL_ASSERT(cnd)\
-	do {\
-		if (!(cnd)){\
-			fprintf(stderr,"Assert failed:\nFile: %s\nLine: %d\nCondition: %s\nSDL error: %s\n",FILENAME,__LINE__,#cnd,SDL_GetError());\
-			debug_break();\
-			exit(1);\
-		}\
-	} while (0)
-#else
-#define SDL_ASSERT(cnd)\
-	do {\
-		if (!(cnd)){\
-			fatal_error("Assert failed:\nFile: %s\nLine: %d\nCondition: %s\nSDL error: %s",FILENAME,__LINE__,#cnd,SDL_GetError());\
-			exit(1);\
-		}\
-	} while (0)
-#endif
-
-void set_error_callback(void (*func)(void));
+void error_box(char *msg);
 
 void fatal_error(char *format, ...);
 

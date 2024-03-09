@@ -3,25 +3,16 @@
 
 char *assertPath;
 
-static void (*error_callback)(void);
-void set_error_callback(void (*func)(void)){
-	error_callback = func;
-}
-
 void fatal_error(char *format, ...){
-	if (error_callback){
-		error_callback();
+	va_list args;
+	va_start(args,format);
 
-		va_list args;
-		va_start(args,format);
+	static char msg[4096];
+	vsnprintf(msg,COUNT(msg),format,args);
+	fprintf(stderr,"%s\n",msg);
+	error_box(msg);
 
-		static char msg[4096];
-		vsnprintf(msg,COUNT(msg),format,args);
-		fprintf(stderr,"%s\n",msg);
-		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"Error",msg,0);
-
-		va_end(args);
-	}
+	va_end(args);
 	
 	exit(1);
 }
