@@ -90,6 +90,21 @@
                     0,
                     &deviceContext
                 )));
+
+                {
+                    IDXGIDevice* dxgiDevice;
+                    device->lpVtbl->QueryInterface(device,&IID_IDXGIDevice,&dxgiDevice);
+                    IDXGIAdapter* dxgiAdapter;
+                    dxgiDevice->lpVtbl->GetAdapter(dxgiDevice,&dxgiAdapter);
+                    IDXGIFactory* factory;
+                    dxgiAdapter->lpVtbl->GetParent(dxgiAdapter,&IID_IDXGIFactory,&factory);
+                    // disable silly Alt+Enter changing monitor resolution to match window size
+                    factory->lpVtbl->MakeWindowAssociation(factory,hwnd,DXGI_MWA_NO_ALT_ENTER);
+                    factory->lpVtbl->Release(factory);
+                    dxgiAdapter->lpVtbl->Release(dxgiAdapter);
+                    dxgiDevice->lpVtbl->Release(dxgiDevice);
+                }
+
                 CreateRenderTargets();
                 break;
             }
