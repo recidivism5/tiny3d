@@ -216,6 +216,6 @@ int main(int argc, char **argv){
 	for (int i = 0; i < SCREEN_WIDTH*SCREEN_HEIGHT; i++){
 		screen[i] = 0xffff0000;
 	}
-	draw_line(0,0,100,100,0xffffffff);
+	draw_line(0,0,100,100,0x00ffffff);
 	open_window(SCREEN_WIDTH,SCREEN_HEIGHT,screen);
 }

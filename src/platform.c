@@ -329,7 +329,7 @@
                     deviceContext->lpVtbl->PSSetShaderResources(deviceContext,0,1,&textureView);
                     deviceContext->lpVtbl->PSSetShader(deviceContext,pshader,0,0);
 
-                    deviceContext->lpVtbl->OMSetBlendState(deviceContext,blendState,0,~0U);
+                    //deviceContext->lpVtbl->OMSetBlendState(deviceContext,blendState,0,~0U);
                     deviceContext->lpVtbl->OMSetDepthStencilState(deviceContext,depthStencilState,0);
 
                     deviceContext->lpVtbl->Draw(deviceContext,6,0);
