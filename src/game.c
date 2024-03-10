@@ -11,13 +11,12 @@ typedef struct {
 
 #define SCREEN_WIDTH 256
 #define SCREEN_HEIGHT 192
-Color screen[SCREEN_WIDTH*SCREEN_HEIGHT];
+uint32_t screen[SCREEN_WIDTH*SCREEN_HEIGHT];
 float depthBuffer[SCREEN_WIDTH*SCREEN_HEIGHT];
 
 mat4 project, modelView[32], modelViewProject;
 int mvIndex = 0;
 
-Color currentColor;
 vec4 verts[3];
 int vcount = 0;
 
@@ -46,7 +45,7 @@ void rotate(float x, float y, float z, float angle){
 	mv_apply();
 }
 
-void line(int x0, int y0, int x1, int y1, Color color){
+void draw_line(int x0, int y0, int x1, int y1, uint32_t color){
 	int dx = abs(x1-x0), sx = x0<x1 ? 1 : -1;
 	int dy = abs(y1-y0), sy = y0<y1 ? 1 : -1;
 	int err = (dx>dy ? dx : -dy)/2, e2;
@@ -193,7 +192,7 @@ void draw_bmf(BMF *b){
 									uv[1] *= texture->height-1;
 									uv[0] = roundf(uv[0]);
 									uv[1] = roundf(uv[1]);
-									screen[p[1]*SCREEN_WIDTH+p[0]].w = texture->pixels[((int)uv[1])*texture->width + (int)uv[0]].w;
+									screen[p[1]*SCREEN_WIDTH+p[0]] = texture->pixels[((int)uv[1])*texture->width + (int)uv[0]];
 								}
 							}
 						}
@@ -205,6 +204,18 @@ void draw_bmf(BMF *b){
 	}
 }
 
+void keydown(int key){
+	printf("keydown: %c\n",key);
+}
+
+void keyup(int key){
+	printf("keyup: %c\n",key);
+}
+
 int main(int argc, char **argv){
+	for (int i = 0; i < SCREEN_WIDTH*SCREEN_HEIGHT; i++){
+		screen[i] = 0xffff0000;
+	}
+	draw_line(0,0,100,100,0xffffffff);
 	open_window(SCREEN_WIDTH,SCREEN_HEIGHT,screen);
 }
