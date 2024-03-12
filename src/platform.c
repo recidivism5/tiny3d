@@ -776,6 +776,10 @@
         XVisualInfo *visual_info = glXChooseVisual(display, screen, visual_hints);
         GLXContext context = glXCreateContext(display, visual_info, NULL, True);
         glXMakeCurrent(display, window, context);
+        typedef void (*PFNGLXSWAPINTERVALEXTPROC)(Display *, GLXDrawable, int);
+        PFNGLXSWAPINTERVALEXTPROC glXSwapIntervalEXT = (PFNGLXSWAPINTERVALEXTPROC)glXGetProcAddress("glXSwapIntervalEXT");
+        ASSERT(glXSwapIntervalEXT);
+        glXSwapIntervalEXT(display,window,1);
 
         XMapWindow(display, window);
         XMoveWindow(display, window, swidth/2-width/2, sheight/2-height/2);
