@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project (tiny3d C CXX)
+project(tiny3d C)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include_directories(third_party/debugbreak)
@@ -23,6 +23,12 @@ if(MSVC)
 			LINK_FLAGS_RELWITHDEBINFO "/SUBSYSTEM:windows /ENTRY:mainCRTStartup"
 			LINK_FLAGS_MINSIZEREL "/SUBSYSTEM:windows /ENTRY:mainCRTStartup"
 	)
+endif()
+
+if(UNIX)
+	find_package(OpenGL REQUIRED)
+	include_directories(${OPENGL_INCLUDE_DIRS})
+	target_link_libraries(${PROJECT_NAME} X11 ${OPENGL_LIBRARIES} m)
 endif()
 
 target_link_libraries(${PROJECT_NAME} whereami qoa qoi)

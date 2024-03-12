@@ -1,5 +1,6 @@
 #include <bmf.h>
 #include <platform.h>
+#include <linmath.h>
 
 ///////////////////////////////////////// types:
 
@@ -212,10 +213,13 @@ void keyup(int key){
 	printf("keyup: %c\n",key);
 }
 
-int main(int argc, char **argv){
+void update(double time, double deltaTime){
 	for (int i = 0; i < SCREEN_WIDTH*SCREEN_HEIGHT; i++){
 		screen[i] = 0xffff0000;
 	}
-	draw_line(0,0,100,100,0x00ffffff);
-	open_window(SCREEN_WIDTH,SCREEN_HEIGHT,screen);
+	draw_line(0,0,100,100+50*sin(time),0x00ffffff);
+}
+
+int main(int argc, char **argv){
+	open_window(SCREEN_WIDTH*2,SCREEN_HEIGHT*2,SCREEN_WIDTH,SCREEN_HEIGHT,screen);
 }

@@ -23,7 +23,7 @@
 
 #define FILENAME (strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 
-#if _DEBUG
+#ifndef NDEBUG
 #define ASSERT(cnd)\
 	do {\
 		if (!(cnd)){\
@@ -43,7 +43,7 @@
 #endif
 
 extern char *assertPath;
-#if _DEBUG
+#ifndef NDEBUG
 #define ASSERT_FILE(cnd)\
 	do {\
 		if (!(cnd)){\
