@@ -187,10 +187,12 @@ __inline__ static void debug_break(void)
 #define SCREEN_HEIGHT 192
 extern uint32_t screen[SCREEN_WIDTH*SCREEN_HEIGHT];
 
+//define these:
 extern void keydown(int key);
 extern void keyup(int key);
 extern void update(double time, double deltaTime);
 
+//utility functions:
 void error_box(char *msg);
 void fatal_error(char *format, ...);
 char *format_string(char *format, ...);
@@ -201,6 +203,10 @@ char *load_file_as_cstring(char *format, ...);
 uint32_t *load_image(bool flip_vertically, int *width, int *height, char *format, ...);
 //scale = 0: fullscreen
 void open_window(int scale);
+
+//drawing functions:
+void clear_screen(uint32_t color);
+void draw_line(int x0, int y0, int x1, int y1, uint32_t color);
 
 #define COUNT(arr) (sizeof(arr)/sizeof(*arr))
 #define MIN(a,b) ((a) < (b) ? (a) : (b))

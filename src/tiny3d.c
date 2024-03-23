@@ -125,6 +125,25 @@ char *load_file_as_cstring(char *format, ...){
 	return str;
 }
 
+void clear_screen(uint32_t color){
+  	for (int i = 0; i < SCREEN_WIDTH*SCREEN_HEIGHT; i++){
+		screen[i] = color;
+	}
+}
+
+void draw_line(int x0, int y0, int x1, int y1, uint32_t color){
+	int dx = abs(x1-x0), sx = x0<x1 ? 1 : -1;
+	int dy = abs(y1-y0), sy = y0<y1 ? 1 : -1;
+	int err = (dx>dy ? dx : -dy)/2, e2;
+	while (1){
+		screen[y0*SCREEN_WIDTH+x0] = color;
+		if (x0==x1 && y0==y1) break;
+		e2 = err;
+		if (e2 >-dx) { err -= dy; x0 += sx; }
+		if (e2 < dy) { err += dx; y0 += sy; }
+	}
+}
+
 #ifdef _WIN32
     #define WIN32_LEAN_AND_MEAN
     #define NOMINMAX
@@ -558,6 +577,7 @@ char *load_file_as_cstring(char *format, ...){
         ASSERT(RegisterClassExW(&wcex));
 
         HWND hwnd;
+        ASSERT(scale >= 0);
         if (scale > 0){
 
             RECT initialRect = {0, 0, scale*SCREEN_WIDTH, scale*SCREEN_HEIGHT};
