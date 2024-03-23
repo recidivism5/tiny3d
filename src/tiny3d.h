@@ -183,6 +183,10 @@ __inline__ static void debug_break(void)
 #include <string.h>
 #include <time.h>
 
+#define SCREEN_WIDTH 256
+#define SCREEN_HEIGHT 192
+extern uint32_t screen[SCREEN_WIDTH*SCREEN_HEIGHT];
+
 extern void keydown(int key);
 extern void keyup(int key);
 extern void update(double time, double deltaTime);
@@ -195,7 +199,8 @@ FILE *fopen_relative(char *format, ...);
 unsigned char *load_file(int *size, char *format, ...);
 char *load_file_as_cstring(char *format, ...);
 uint32_t *load_image(bool flip_vertically, int *width, int *height, char *format, ...);
-void open_window(int width, int height, int fbWidth, int fbHeight, uint32_t *framebuffer);
+//scale = 0: fullscreen
+void open_window(int scale);
 
 #define COUNT(arr) (sizeof(arr)/sizeof(*arr))
 #define MIN(a,b) ((a) < (b) ? (a) : (b))

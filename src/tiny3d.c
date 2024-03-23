@@ -1,5 +1,8 @@
 #include "tiny3d.h"
 
+uint32_t screen[SCREEN_WIDTH*SCREEN_HEIGHT];
+char *assertPath;
+
 void fatal_error(char *format, ...){
 	va_list args;
 	va_start(args,format);
@@ -146,8 +149,6 @@ char *load_file_as_cstring(char *format, ...){
     static ID3D11VertexShader *vshader;
     static ID3D11PixelShader *pshader;
     static ID3D11DepthStencilState *depthStencilState;
-    static int gwidth, gheight;
-    static unsigned int *gframebuffer;
     typedef struct {
         float position[2];
         float texcoord[2];
@@ -167,7 +168,12 @@ char *load_file_as_cstring(char *format, ...){
             ASSERT(ifactory);
         }
         IWICBitmapDecoder *pDecoder = 0;
-        ASSERT_FILE(SUCCEEDED(ifactory->lpVtbl->CreateDecoderFromFilename(ifactory,assertPath,0,GENERIC_READ,WICDecodeMetadataCacheOnDemand,&pDecoder)));
+        size_t len = strlen(assertPath)+1;
+        WCHAR *wpath = malloc(len*sizeof(*wpath));
+        ASSERT(wpath);
+        mbstowcs(wpath,assertPath,len);
+        ASSERT_FILE(SUCCEEDED(ifactory->lpVtbl->CreateDecoderFromFilename(ifactory,wpath,0,GENERIC_READ,WICDecodeMetadataCacheOnDemand,&pDecoder)));
+        free(wpath);
         IWICBitmapFrameDecode *pFrame = 0;
         ASSERT_FILE(SUCCEEDED(pDecoder->lpVtbl->GetFrame(pDecoder,0,&pFrame)));
         IWICBitmapSource *convertedSrc = 0;
@@ -283,8 +289,8 @@ char *load_file_as_cstring(char *format, ...){
 
                 {
                     D3D11_TEXTURE2D_DESC desc ={
-                        .Width = gwidth,
-                        .Height = gheight,
+                        .Width = SCREEN_WIDTH,
+                        .Height = SCREEN_HEIGHT,
                         .MipLevels = 1,
                         .ArraySize = 1,
                         .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
@@ -480,12 +486,12 @@ char *load_file_as_cstring(char *format, ...){
                     int cwidth = cr.right-cr.left;
                     int cheight = cr.bottom-cr.top;
                     int scale = 1;
-                    while (gwidth*scale <= cwidth && gheight*scale <= cheight){
+                    while (SCREEN_WIDTH*scale <= cwidth && SCREEN_HEIGHT*scale <= cheight){
                         scale++;
                     }
                     scale--;
-                    int scaledWidth = scale * gwidth;
-                    int scaledHeight = scale * gheight;
+                    int scaledWidth = scale * SCREEN_WIDTH;
+                    int scaledHeight = scale * SCREEN_HEIGHT;
                     D3D11_VIEWPORT viewport = {
                         .TopLeftX = (FLOAT)(cwidth/2-scaledWidth/2),
                         .TopLeftY = (FLOAT)(cheight/2-scaledHeight/2),
@@ -498,7 +504,7 @@ char *load_file_as_cstring(char *format, ...){
                     deviceContext->lpVtbl->RSSetState(deviceContext,rasterizerState);
 
                     deviceContext->lpVtbl->PSSetSamplers(deviceContext,0,1,&sampler);
-                    deviceContext->lpVtbl->UpdateSubresource(deviceContext,(ID3D11Resource *)texture,0,0,gframebuffer,gwidth*sizeof(*gframebuffer),0);
+                    deviceContext->lpVtbl->UpdateSubresource(deviceContext,(ID3D11Resource *)texture,0,0,screen,SCREEN_WIDTH*sizeof(*screen),0);
                     deviceContext->lpVtbl->PSSetShaderResources(deviceContext,0,1,&textureView);
                     deviceContext->lpVtbl->PSSetShader(deviceContext,pshader,0,0);
 
@@ -538,7 +544,7 @@ char *load_file_as_cstring(char *format, ...){
         }
         return DefWindowProcW(hwnd, msg, wparam, lparam);
     }
-    void open_window(int width, int height, int fbWidth, int fbHeight, uint32_t *framebuffer){
+    void open_window(int scale){
         WNDCLASSEXW wcex = {
             .cbSize = sizeof(wcex),
             .style = CS_HREDRAW | CS_VREDRAW,
@@ -551,24 +557,38 @@ char *load_file_as_cstring(char *format, ...){
         };
         ASSERT(RegisterClassExW(&wcex));
 
-        gwidth = fbWidth;
-        gheight = fbHeight;
-        gframebuffer = framebuffer;
-        RECT initialRect = {0, 0, width, height};
-        AdjustWindowRect(&initialRect,WS_OVERLAPPEDWINDOW,FALSE);
-        LONG initialWidth = initialRect.right - initialRect.left;
-        LONG initialHeight = initialRect.bottom - initialRect.top;
+        HWND hwnd;
+        if (scale > 0){
 
-        HWND hwnd = CreateWindowExW(
-            0, //WS_EX_OVERLAPPEDWINDOW fucks up the borders when maximized
-            wcex.lpszClassName,
-            wcex.lpszClassName,
-            WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            GetSystemMetrics(SM_CXSCREEN)/2-initialWidth/2,
-            GetSystemMetrics(SM_CYSCREEN)/2-initialHeight/2,
-            initialWidth, 
-            initialHeight,
-            0, 0, wcex.hInstance, 0);
+            RECT initialRect = {0, 0, scale*SCREEN_WIDTH, scale*SCREEN_HEIGHT};
+            AdjustWindowRect(&initialRect,WS_OVERLAPPEDWINDOW,FALSE);
+            LONG initialWidth = initialRect.right - initialRect.left;
+            LONG initialHeight = initialRect.bottom - initialRect.top;
+
+            hwnd = CreateWindowExW(
+                0, //WS_EX_OVERLAPPEDWINDOW fucks up the borders when maximized
+                wcex.lpszClassName,
+                wcex.lpszClassName,
+                WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                GetSystemMetrics(SM_CXSCREEN)/2-initialWidth/2,
+                GetSystemMetrics(SM_CYSCREEN)/2-initialHeight/2,
+                initialWidth, 
+                initialHeight,
+                0, 0, wcex.hInstance, 0
+            );
+        } else {
+            hwnd = CreateWindowExW(
+                0, //WS_EX_OVERLAPPEDWINDOW fucks up the borders when maximized
+                wcex.lpszClassName,
+                wcex.lpszClassName,
+                WS_POPUP | WS_VISIBLE,
+                0,
+                0,
+                GetSystemMetrics(SM_CXSCREEN), 
+                GetSystemMetrics(SM_CYSCREEN),
+                0, 0, wcex.hInstance, 0
+            );
+        }
         ASSERT(hwnd);
 
         QueryPerformanceFrequency(&freq);
