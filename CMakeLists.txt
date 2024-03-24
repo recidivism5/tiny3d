@@ -10,18 +10,24 @@ if(MSVC)
 	set_target_properties(
 		${PROJECT_NAME}
 		PROPERTIES
-			LINK_FLAGS "dxguid.lib d3d11.lib d3dcompiler.lib dwmapi.lib uuid.lib windowscodecs.lib"
 			LINK_FLAGS_DEBUG "/SUBSYSTEM:CONSOLE"
 			LINK_FLAGS_RELEASE "/SUBSYSTEM:windows /ENTRY:mainCRTStartup"
 			LINK_FLAGS_RELWITHDEBINFO "/SUBSYSTEM:windows /ENTRY:mainCRTStartup"
 			LINK_FLAGS_MINSIZEREL "/SUBSYSTEM:windows /ENTRY:mainCRTStartup"
 	)
 endif()
-
-if(UNIX)
+if (WINDOWS)
+	target_link_libraries(${PROJECT_NAME} dxguid d3d11 d3dcompiler dwmapi uuid windowscodecs)
+else()
 	find_package(OpenGL REQUIRED)
 	include_directories(${OPENGL_INCLUDE_DIRS})
-	target_link_libraries(${PROJECT_NAME} X11 ${OPENGL_LIBRARIES} m)
+endif()
+if(APPLE)	
+	target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} m)
+elseif(UNIX)
+	find_package(OpenGL REQUIRED)
+	include_directories(${OPENGL_INCLUDE_DIRS})
+	target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} m X11)
 endif()
 
 if( MSVC )
