@@ -69,6 +69,27 @@ void open_window(int scale){
     [app run];
 }
 
+#if defined(MAC_OS_X_VERSION_10_12) && MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_12
+   static const NSAlertStyle kInformationalStyle = NSAlertStyleInformational;
+   static const NSAlertStyle kWarningStyle = NSAlertStyleWarning;
+   static const NSAlertStyle kCriticalStyle = NSAlertStyleCritical;
+#else
+   static const NSAlertStyle kInformationalStyle = NSInformationalAlertStyle;
+   static const NSAlertStyle kWarningStyle = NSWarningAlertStyle;
+   static const NSAlertStyle kCriticalStyle = NSCriticalAlertStyle;
+#endif
 void error_box(char *msg){
+   NSAlert* alert = [[NSAlert alloc] init];
 
+   [alert setMessageText:[NSString stringWithUTF8String:"Error"]];
+   [alert setInformativeText:[NSString stringWithUTF8String:msg]];
+
+   [alert setAlertStyle:kCriticalStyle];
+   [alert addButtonWithTitle:@"Ok"];
+
+   // Force the alert to appear on top of any other windows
+   [[alert window] setLevel:NSModalPanelWindowLevel];
+
+   [alert runModal];
+   [alert release];
 }

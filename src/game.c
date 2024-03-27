@@ -15,5 +15,6 @@ void update(double time, double deltaTime){
 }
 
 int main(int argc, char **argv){
+	ASSERT(0);
     open_window(3);
 }

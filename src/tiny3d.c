@@ -91,7 +91,7 @@ unsigned char *load_file(int *size, char *format, ...){
 	long len = ftell(f);
 	ASSERT_FILE(len > 0);
 	fseek(f,0,SEEK_SET);
-	char *buf = malloc(len);
+	unsigned char *buf = malloc(len);
 	ASSERT_FILE(buf);
 	fread(buf,1,len,f);
 	fclose(f);
