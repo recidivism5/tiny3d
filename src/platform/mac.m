@@ -8,6 +8,7 @@
 @end
 @implementation MyOpenGLView
 - (void)drawRect:(NSRect)dirtyRect {
+   //https://stackoverflow.com/questions/2440089/nsopenglview-resize-on-window-resize
    glViewport(0,0,(int)[[self superview] bounds].size.width,(int)[[self superview] bounds].size.height);
    glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
    glClear(GL_COLOR_BUFFER_BIT);
