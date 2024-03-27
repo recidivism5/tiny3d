@@ -58,15 +58,17 @@
 }
 @end
 
-void error_box(char *msg){
-
-}
-
 void open_window(int scale){
-    [NSApp setActivationPolicy:0];
+    [NSAutoreleasePool new];
     NSApplication* app = [NSApplication sharedApplication];
+    [app setActivationPolicy:NSApplicationActivationPolicyRegular];
+    [app activateIgnoringOtherApps:YES];
     AppDelegate* appDelegate = [[AppDelegate alloc] init];
     [app setDelegate:appDelegate];
     [app activateIgnoringOtherApps:true];
     [app run];
+}
+
+void error_box(char *msg){
+
 }
