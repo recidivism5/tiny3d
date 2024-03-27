@@ -10,7 +10,7 @@ elseif(APPLE)
 else()
 	set(PLATFORM_SRC "src/platform/unix.c")
 endif()
-add_executable(${PROJECT_NAME} "src/tiny3d.c" "src/game.c" ${PLATFORM_SRC})
+add_executable(${PROJECT_NAME} "src/tiny3d.c" "src/game.c" "src/tinymath.c" "src/whereami.c" ${PLATFORM_SRC})
 if(MSVC)
 	set_target_properties(
 		${PROJECT_NAME}

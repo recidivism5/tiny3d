@@ -10,7 +10,6 @@
 #define COBJMACROS
 #include <mmdeviceapi.h>
 #include <audioclient.h>
-#include <math.h>
 static IDXGISwapChain *swapChain;
 static ID3D11Device *device;
 static ID3D11DeviceContext *deviceContext;

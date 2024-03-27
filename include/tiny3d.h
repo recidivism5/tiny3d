@@ -1,7 +1,5 @@
 #pragma once
 
-#include <debugbreak.h>
-
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -9,6 +7,12 @@
 #include <stdarg.h>
 #include <string.h>
 #include <time.h>
+#define _USE_MATH_DEFINES
+#include <math.h>
+
+#include <debugbreak.h>
+#include <whereami.h>
+#include <tinymath.h>
 
 #define SCREEN_WIDTH 256
 #define SCREEN_HEIGHT 192
@@ -28,8 +32,7 @@ FILE *fopen_relative(char *format, ...);
 unsigned char *load_file(int *size, char *format, ...);
 char *load_file_as_cstring(char *format, ...);
 uint32_t *load_image(bool flip_vertically, int *width, int *height, char *format, ...);
-//scale = 0: fullscreen
-void open_window(int scale);
+void open_window(int scale); //scale = 0: fullscreen
 
 //drawing functions:
 void clear_screen(uint32_t color);
@@ -83,71 +86,3 @@ extern char *assertPath;
 		}\
 	} while (0)
 #endif
-
-// (‑●‑●)> dual licensed under the WTFPL v2 and MIT licenses
-//   without any warranty.
-//   by Gregory Pakosz (@gpakosz)
-// https://github.com/gpakosz/whereami
-
-#ifndef WHEREAMI_H
-#define WHEREAMI_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#ifndef WAI_FUNCSPEC
-  #define WAI_FUNCSPEC
-#endif
-#ifndef WAI_PREFIX
-#define WAI_PREFIX(function) wai_##function
-#endif
-
-/**
- * Returns the path to the current executable.
- *
- * Usage:
- *  - first call `int length = wai_getExecutablePath(NULL, 0, NULL);` to
- *    retrieve the length of the path
- *  - allocate the destination buffer with `path = (char*)malloc(length + 1);`
- *  - call `wai_getExecutablePath(path, length, NULL)` again to retrieve the
- *    path
- *  - add a terminal NUL character with `path[length] = '\0';`
- *
- * @param out destination buffer, optional
- * @param capacity destination buffer capacity
- * @param dirname_length optional recipient for the length of the dirname part
- *   of the path.
- *
- * @return the length of the executable path on success (without a terminal NUL
- * character), otherwise `-1`
- */
-WAI_FUNCSPEC
-int WAI_PREFIX(getExecutablePath)(char* out, int capacity, int* dirname_length);
-
-/**
- * Returns the path to the current module
- *
- * Usage:
- *  - first call `int length = wai_getModulePath(NULL, 0, NULL);` to retrieve
- *    the length  of the path
- *  - allocate the destination buffer with `path = (char*)malloc(length + 1);`
- *  - call `wai_getModulePath(path, length, NULL)` again to retrieve the path
- *  - add a terminal NUL character with `path[length] = '\0';`
- *
- * @param out destination buffer, optional
- * @param capacity destination buffer capacity
- * @param dirname_length optional recipient for the length of the dirname part
- *   of the path.
- *
- * @return the length of the module path on success (without a terminal NUL
- * character), otherwise `-1`
- */
-WAI_FUNCSPEC
-int WAI_PREFIX(getModulePath)(char* out, int capacity, int* dirname_length);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif // #ifndef WHEREAMI_H

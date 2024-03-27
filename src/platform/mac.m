@@ -8,6 +8,7 @@
 @end
 @implementation MyOpenGLView
 - (void)drawRect:(NSRect)dirtyRect {
+   glViewport(0,0,(int)[[self superview] bounds].size.width,(int)[[self superview] bounds].size.height);
    glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
    glClear(GL_COLOR_BUFFER_BIT);
    glBegin(GL_QUADS);
