@@ -1,5 +1,3 @@
-#include <tiny3d.h>
-
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #define UNICODE
@@ -9,6 +7,10 @@
 #include <d3dcompiler.h>
 #include <dwmapi.h>
 #include <wincodec.h>
+#define COBJMACROS
+#include <mmdeviceapi.h>
+#include <audioclient.h>
+#include <math.h>
 static IDXGISwapChain *swapChain;
 static ID3D11Device *device;
 static ID3D11DeviceContext *deviceContext;
@@ -27,6 +29,36 @@ typedef struct {
     float position[2];
     float texcoord[2];
 } Vertex;
+static const GUID _CLSID_MMDeviceEnumerator = {0xbcde0395, 0xe52f, 0x467c, {0x8e,0x3d, 0xc4,0x57,0x92,0x91,0x69,0x2e}};
+static const GUID _IID_IMMDeviceEnumerator = {0xa95664d2, 0x9614, 0x4f35, {0xa7,0x46, 0xde,0x8d,0xb6,0x36,0x17,0xe6}};
+static const GUID _IID_IAudioClient = {0x1cb9ad4c, 0xdbfa, 0x4c32, {0xb1,0x78, 0xc2,0xf5,0x68,0xa7,0x03,0xb2}};
+static const GUID _KSDATAFORMAT_SUBTYPE_IEEE_FLOAT = {0x00000003, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}};
+static const GUID _IID_IAudioRenderClient = {0xf294acfc, 0x3146, 0x4483, {0xa7, 0xbf, 0xad, 0xdc, 0xa7, 0xc2, 0x60, 0xe2}};
+static IMMDeviceEnumerator *enu = NULL;
+static IMMDevice *dev = NULL;
+static IAudioClient *client = NULL;
+static IAudioRenderClient* renderClient = NULL;
+static void fill_audio_buffer(void){
+    UINT32 total;
+    UINT32 padding;
+    ASSERT(SUCCEEDED(client->lpVtbl->GetBufferSize(client, &total)));
+    ASSERT(SUCCEEDED(client->lpVtbl->GetCurrentPadding(client, &padding)));
+    UINT32 remaining = total - padding;
+    if (remaining){
+        struct Sample {
+            float left;
+            float right;
+        } *samples;
+        ASSERT(SUCCEEDED(renderClient->lpVtbl->GetBuffer(renderClient, remaining, (BYTE **)&samples)));
+        static double t = 0.0;
+        for (UINT32 i = 0; i < remaining; i++){
+            samples[i].left = 0.25f*(float)sin(t);
+            samples[i].right = samples[i].left;
+            t += 0.1;
+        }
+        ASSERT(SUCCEEDED(renderClient->lpVtbl->ReleaseBuffer(renderClient,remaining,0)));
+    }
+}
 static LARGE_INTEGER freq, tstart, t0, t1;
 void error_box(char *msg){
     MessageBoxA(0,msg,"Error",MB_ICONERROR);
@@ -236,7 +268,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam){
 
             CreateRenderTargets();
 
-            
             {
                 // these must match vertex shader input layout (VS_INPUT in vertex shader source below)
                 D3D11_INPUT_ELEMENT_DESC desc[] =
@@ -312,12 +343,41 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam){
                 pblob->lpVtbl->Release(pblob);
                 vblob->lpVtbl->Release(vblob);
             }
+            
+            //init audio:
+            {
+                ASSERT(SUCCEEDED(CoInitializeEx(0, 0)));
+                ASSERT(SUCCEEDED(CoCreateInstance(&_CLSID_MMDeviceEnumerator, NULL, CLSCTX_ALL, &_IID_IMMDeviceEnumerator, (void**)&enu)));
+                ASSERT(SUCCEEDED(enu->lpVtbl->GetDefaultAudioEndpoint(enu, eRender, eConsole, &dev)));
+                ASSERT(SUCCEEDED(dev->lpVtbl->Activate(dev, &_IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&client)));
+                WAVEFORMATEXTENSIBLE fmtex = {0};
+                fmtex.Format.nChannels = 2;
+                fmtex.Format.nSamplesPerSec = 44100;
+                fmtex.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
+                fmtex.Format.wBitsPerSample = 32;
+                fmtex.Format.nBlockAlign = (fmtex.Format.nChannels * fmtex.Format.wBitsPerSample) / 8;
+                fmtex.Format.nAvgBytesPerSec = fmtex.Format.nSamplesPerSec * fmtex.Format.nBlockAlign;
+                fmtex.Format.cbSize = 22;   /* WORD + DWORD + GUID */
+                fmtex.Samples.wValidBitsPerSample = 32;
+                fmtex.dwChannelMask = SPEAKER_FRONT_LEFT|SPEAKER_FRONT_RIGHT;
+                fmtex.SubFormat = _KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
+                REFERENCE_TIME dur = (REFERENCE_TIME)(((double)2048) / (((double)fmtex.Format.nSamplesPerSec) * (1.0/10000000.0)));
+                ASSERT(SUCCEEDED(client->lpVtbl->Initialize(
+                    client,
+                    AUDCLNT_SHAREMODE_SHARED,
+                    AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM|AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY,
+                    dur, 0, (WAVEFORMATEX*)&fmtex, 0)));
+                ASSERT(SUCCEEDED(client->lpVtbl->GetService(client, &_IID_IAudioRenderClient, (void**)&renderClient)));
+                ASSERT(SUCCEEDED(client->lpVtbl->Start(client)));
+            }
             break;
         }
         case WM_PAINT:{
             QueryPerformanceCounter(&t1);
             update((double)(t1.QuadPart-tstart.QuadPart) / (double)freq.QuadPart, (double)(t1.QuadPart-t0.QuadPart) / (double)freq.QuadPart);
             t0 = t1;
+
+            fill_audio_buffer();
 
             deviceContext->lpVtbl->OMSetRenderTargets(deviceContext, 1, &renderTargetView, depthStencilView);
             FLOAT clearColor[4] = {0.1f, 0.2f, 0.6f, 1.0f};
