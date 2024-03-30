@@ -10,6 +10,7 @@ void keyup(int key){
 }
 
 void update(double time, double deltaTime){
+	printf("time: %lf\n",deltaTime);
 	clear_screen(0xffff0000);
 	draw_line(0,0,100,100+50*sin(time),0x00ffffff);
 }
