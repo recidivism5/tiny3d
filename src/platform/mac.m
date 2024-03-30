@@ -368,9 +368,47 @@ static CVReturn GlobalDisplayLinkCallback(CVDisplayLinkRef, const CVTimeStamp*, 
 	[[self openGLContext] makeCurrentContext];
 	CGLLockContext((CGLContextObj)[[self openGLContext] CGLContextObj]);
 
-	NSLog(@"Update");
+	//NSLog(@"Update");
 	// Temp
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+   static uint64_t tstart, t0, t1;
+   static GLuint texture = 0;
+   if (!texture){
+      tstart = get_time();
+      t0 = tstart;
+
+      glGenTextures(1,&texture);
+      glBindTexture(GL_TEXTURE_2D,texture);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+   }
+   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCREEN_WIDTH, SCREEN_HEIGHT, 0, GL_BGRA, GL_UNSIGNED_BYTE, screen);
+
+   t1 = get_time();
+   update((double)(t1-tstart) / 1000000000.0, (double)(t1-t0) / 1000000000.0);
+   t0 = t1;
+   
+   glClearColor(0.0f,0.0f,1.0f,1.0f);
+   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+   int scale = 1;
+   while (SCREEN_WIDTH*scale <= windowRect.size.width && SCREEN_HEIGHT*scale <= windowRect.size.height){
+      scale++;
+   }
+   scale--;
+   int scaledWidth = scale * SCREEN_WIDTH;
+   int scaledHeight = scale * SCREEN_HEIGHT;
+   int x = windowRect.size.width/2-scaledWidth/2;
+   int y = windowRect.size.height/2-scaledHeight/2;
+   printf("%lf %lf\n",windowRect.size.width,windowRect.size.height);
+   //glViewport(0, 0, windowRect.size.width, windowRect.size.height);
+   //glViewport(x,y,scaledWidth,scaledHeight);
+   glEnable(GL_TEXTURE_2D);
+   glBegin(GL_QUADS);
+   glTexCoord2f(0,0); glVertex2f(-1,-1);
+   glTexCoord2f(1,0); glVertex2f(1,-1);
+   glTexCoord2f(1,1); glVertex2f(1,1);
+   glTexCoord2f(0,1); glVertex2f(-1,1);
+   glEnd();
 
 	// EndTemp
 
@@ -396,6 +434,10 @@ static CVReturn GlobalDisplayLinkCallback(CVDisplayLinkRef, const CVTimeStamp*, 
 	// Temp
 	windowRect.size.width = size.width;
 	windowRect.size.height = size.height;
+   CGLContextObj cglContext = (CGLContextObj)[[self openGLContext] CGLContextObj];
+   GLint dim[2] = {windowRect.size.width, windowRect.size.height};
+	CGLSetParameter(cglContext, kCGLCPSurfaceBackingSize, dim);
+	CGLEnable(cglContext, kCGLCESurfaceBackingSize);
 	glViewport(0, 0, windowRect.size.width, windowRect.size.height);
 	// End temp
 	CGLUnlockContext((CGLContextObj)[[self openGLContext] CGLContextObj]); 
