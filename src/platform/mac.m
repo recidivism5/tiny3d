@@ -6,13 +6,15 @@
 #import <CoreVideo/CVDisplayLink.h>
 
 #include <AudioToolbox/AudioQueue.h>
-/*struct fenster_audio {
+#define FENSTER_SAMPLE_RATE 44100
+#define FENSTER_AUDIO_BUFSZ 8192
+struct fenster_audio {
 	AudioQueueRef queue;
 	size_t pos;
 	float buf[FENSTER_AUDIO_BUFSZ];
 	dispatch_semaphore_t drained;
 	dispatch_semaphore_t full;
-};
+} audioState;
 static void fenster_audio_cb(void *p, AudioQueueRef q, AudioQueueBufferRef b) {
 	struct fenster_audio *fa = (struct fenster_audio *)p;
 	dispatch_semaphore_wait(fa->full, DISPATCH_TIME_FOREVER);
@@ -59,7 +61,7 @@ void fenster_audio_write(struct fenster_audio *fa, float *buf,
 		fa->pos = 0;
 		dispatch_semaphore_signal(fa->full);
 	}
-}*/
+}
 
 #include <time.h>
 uint64_t get_time(void){
@@ -111,10 +113,11 @@ void error_box(char *msg){
 
 	t1 = get_time();
 
+	int nSamples = fenster_audio_available(&audioState);
 	#if USE_GL
-		update((double)(t1-tstart) / 1000000000.0, (double)(t1-t0) / 1000000000.0, width, height);
+		update((double)(t1-tstart) / 1000000000.0, (double)(t1-t0) / 1000000000.0, width, height, nSamples, audioState.buf+audioState.pos);
 	#else
-		update((double)(t1-tstart) / 1000000000.0, (double)(t1-t0) / 1000000000.0);
+		update((double)(t1-tstart) / 1000000000.0, (double)(t1-t0) / 1000000000.0, nSamples, audioState.buf+audioState.pos);
 
 		glViewport(0,0,width,height);
 
@@ -147,6 +150,12 @@ void error_box(char *msg){
 		glTexCoord2f(0,1); glVertex2f(-1,1);
 		glEnd();
 	#endif
+
+	audioState.pos += nSamples;
+	if (audioState.pos >= FENSTER_AUDIO_BUFSZ){
+		audioState.pos = 0;
+		dispatch_semaphore_signal(audioState.full);
+	}
 	
 	t0 = t1;
 
@@ -204,6 +213,9 @@ static int swidth, sheight;
    CGLPixelFormatObj cglPixelFormat = [[NSOpenGLView defaultPixelFormat] CGLPixelFormatObj];
    CVDisplayLinkSetCurrentCGDisplayFromOpenGLContext(displayLink, cglContext, cglPixelFormat);
    CVDisplayLinkStart(displayLink);
+
+   //audio:
+   fenster_audio_open(&audioState);
 }
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)sender {
    return YES;
