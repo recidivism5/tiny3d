@@ -14,14 +14,33 @@
 #include <whereami.h>
 #include <tinymath.h>
 
-#define SCREEN_WIDTH 256
-#define SCREEN_HEIGHT 192
-extern uint32_t screen[SCREEN_WIDTH*SCREEN_HEIGHT];
+#define USE_GL 1
+#if USE_GL
+	#if __APPLE__
+		#include <OpenGL/OpenGL.h>
+		#include <OpenGL/gl.h>
+	#else
+		#include <GL/gl.h>
+	#endif
+	void open_window(int width, int height); //width = 0: fullscreen
+	//define this:
+	extern void update(double time, double deltaTime, int width, int height);
+#else
+	#define SCREEN_WIDTH 256
+	#define SCREEN_HEIGHT 192
+	extern uint32_t screen[SCREEN_WIDTH*SCREEN_HEIGHT];
+	void open_window(int scale); //scale = 0: fullscreen
+	//define this:
+	extern void update(double time, double deltaTime);
+
+	//drawing functions:
+	void clear_screen(uint32_t color);
+	void draw_line(int x0, int y0, int x1, int y1, uint32_t color);
+#endif
 
 //define these:
 extern void keydown(int key);
 extern void keyup(int key);
-extern void update(double time, double deltaTime);
 
 //utility functions:
 void error_box(char *msg);
@@ -32,11 +51,6 @@ FILE *fopen_relative(char *format, ...);
 unsigned char *load_file(int *size, char *format, ...);
 char *load_file_as_cstring(char *format, ...);
 uint32_t *load_image(bool flip_vertically, int *width, int *height, char *format, ...);
-void open_window(int scale); //scale = 0: fullscreen
-
-//drawing functions:
-void clear_screen(uint32_t color);
-void draw_line(int x0, int y0, int x1, int y1, uint32_t color);
 
 #define COUNT(arr) (sizeof(arr)/sizeof(*arr))
 #define MIN(a,b) ((a) < (b) ? (a) : (b))

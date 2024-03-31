@@ -9,12 +9,13 @@ void keyup(int key){
 	printf("keyup: %c\n",key);
 }
 
-void update(double time, double deltaTime){
+void update(double time, double deltaTime, int width, int height){
 	printf("time: %lf\n",deltaTime);
-	clear_screen(0xffff0000);
-	draw_line(0,0,100,100+50*sin(time),0x00ffffff);
+	glViewport(0,0,width,height);
+	glClearColor(0,1,0.5+0.5*sin(time),1);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 int main(int argc, char **argv){
-    open_window(3);
+    open_window(640,480);
 }
