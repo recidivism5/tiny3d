@@ -1,9 +1,11 @@
 #include <tiny3d.h>
-#include <stdio.h>
-#include <Cocoa/Cocoa.h>
-#include <CoreVideo/CVDisplayLink.h>
-#include <time.h>
 
+#import <Cocoa/Cocoa.h>
+#import <OpenGL/OpenGL.h>
+#import <OpenGL/gl.h>
+#import <CoreVideo/CVDisplayLink.h>
+
+#include <time.h>
 uint64_t get_time(void){
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
