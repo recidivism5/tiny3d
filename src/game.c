@@ -3,11 +3,15 @@
 #include <limits.h>
 
 void keydown(int key){
-	printf("keydown: %c\n",key);
+	printf("keydown: %d\n",key);
 }
 
 void keyup(int key){
-	printf("keyup: %c\n",key);
+	printf("keyup: %d\n",key);
+}
+
+void mousemove(int x, int y){
+	printf("mousemove: %d %d\n",x,y);
 }
 
 void update(double time, double deltaTime, int width, int height, int nSamples, signed short *samples){
@@ -18,6 +22,7 @@ void update(double time, double deltaTime, int width, int height, int nSamples, 
 		audioTime += 0.05;
 	}
 	glViewport(0,0,width,height);
+	
 	glClearColor(0,1,0.5+0.5*sin(time),1);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }

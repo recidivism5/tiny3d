@@ -39,8 +39,11 @@
 #endif
 
 //define these:
+#define KEY_MOUSE_LEFT 128
+#define KEY_MOUSE_RIGHT 129
 extern void keydown(int key);
 extern void keyup(int key);
+extern void mousemove(int x, int y);
 
 //utility functions:
 void error_box(char *msg);

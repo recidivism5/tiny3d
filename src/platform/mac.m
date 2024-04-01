@@ -101,8 +101,8 @@ void error_box(char *msg){
 	}
 
 	//https://stackoverflow.com/questions/2440089/nsopenglview-resize-on-window-resize
-	int width = (int)[[self superview] bounds].size.width;
-	int height = (int)[[self superview] bounds].size.height;
+	int width = (int)[self bounds].size.width;
+	int height = (int)[self bounds].size.height;
 
 	t1 = get_time();
 
@@ -159,78 +159,43 @@ void error_box(char *msg){
 }
 
 - (void)mouseMoved:(NSEvent*) event {
-	
 	NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
-	NSLog(@"Mouse pos: %lf, %lf", point.x, point.y);
-	
+	//NSLog(@"Mouse pos: %lf, %lf", point.x, point.y);
+	mousemove((int)point.x,(int)point.y);
 }
 
 - (void) mouseDragged: (NSEvent*) event {
-	
 	NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
 	NSLog(@"Mouse pos: %lf, %lf", point.x, point.y);
-	
 }
 
 - (void)scrollWheel: (NSEvent*) event  {
-	
 	NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
 	NSLog(@"Mouse wheel at: %lf, %lf. Delta: %lf", point.x, point.y, [event deltaY]);
-	
 }
 
 - (void) mouseDown: (NSEvent*) event {
-	
+	keydown(KEY_MOUSE_LEFT);
 	NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
-	NSLog(@"Left mouse down: %lf, %lf", point.x, point.y);
-	
+	//NSLog(@"Left mouse down: %lf, %lf", point.x, point.y);
 }
 
 - (void) mouseUp: (NSEvent*) event {
-	
+	keyup(KEY_MOUSE_LEFT);
 	NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
-	NSLog(@"Left mouse up: %lf, %lf", point.x, point.y);
-	
+	//NSLog(@"Left mouse up: %lf, %lf", point.x, point.y);
 }
 
 - (void) rightMouseDown: (NSEvent*) event {
-	
+	keydown(KEY_MOUSE_RIGHT);
 	NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
-	NSLog(@"Right mouse down: %lf, %lf", point.x, point.y);
-	
+	//NSLog(@"Right mouse down: %lf, %lf", point.x, point.y);
 }
 
 - (void) rightMouseUp: (NSEvent*) event {
-	
+	keyup(KEY_MOUSE_RIGHT);
 	NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
-	NSLog(@"Right mouse up: %lf, %lf", point.x, point.y);
-	
-}
-
-- (void)otherMouseDown: (NSEvent*) event {
-	
-	NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
-	NSLog(@"Middle mouse down: %lf, %lf", point.x, point.y);
-	
-}
-
-- (void)otherMouseUp: (NSEvent*) event {
-	
-	NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
-	NSLog(@"Middle mouse up: %lf, %lf", point.x, point.y);
-	
-}
-
-- (void) mouseEntered: (NSEvent*)event {
-	
-	NSLog(@"Mouse entered");
-	
-}
-
-- (void) mouseExited: (NSEvent*)event {
-	
-	NSLog(@"Mouse left");
-	
+	//NSLog(@"Right mouse up: %lf, %lf", point.x, point.y);
 }
 
 static const uint8_t keycodes[128] = {
