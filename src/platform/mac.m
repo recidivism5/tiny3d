@@ -11,7 +11,7 @@
 struct fenster_audio {
 	AudioQueueRef queue;
 	size_t pos;
-	float buf[FENSTER_AUDIO_BUFSZ];
+	signed short buf[FENSTER_AUDIO_BUFSZ*2];
 	dispatch_semaphore_t drained;
 	dispatch_semaphore_t full;
 } audioState;
@@ -23,20 +23,23 @@ static void fenster_audio_cb(void *p, AudioQueueRef q, AudioQueueBufferRef b) {
 	AudioQueueEnqueueBuffer(q, b, 0, NULL);
 }
 int fenster_audio_open(struct fenster_audio *fa) {
-	AudioStreamBasicDescription format = {0};
-	format.mSampleRate = FENSTER_SAMPLE_RATE;
-	format.mFormatID = kAudioFormatLinearPCM;
-	format.mFormatFlags = kLinearPCMFormatFlagIsFloat | kAudioFormatFlagIsPacked;
-	format.mBitsPerChannel = 32;
-	format.mFramesPerPacket = format.mChannelsPerFrame = 1;
-	format.mBytesPerPacket = format.mBytesPerFrame = 4;
+	AudioStreamBasicDescription fmt = {0};
+	fmt.mSampleRate = FENSTER_SAMPLE_RATE;
+    fmt.mFormatID = kAudioFormatLinearPCM;
+    fmt.mFormatFlags = kLinearPCMFormatFlagIsSignedInteger;
+    fmt.mBytesPerFrame = (16 * 2) / 8;
+    fmt.mFramesPerPacket = 1;
+    fmt.mBytesPerPacket = fmt.mFramesPerPacket * fmt.mBytesPerFrame;
+    fmt.mChannelsPerFrame = 2;
+    fmt.mBitsPerChannel = 16;
+    fmt.mReserved = 0;
 	fa->drained = dispatch_semaphore_create(1);
 	fa->full = dispatch_semaphore_create(0);
-	AudioQueueNewOutput(&format, fenster_audio_cb, fa, NULL, NULL, 0, &fa->queue);
+	AudioQueueNewOutput(&fmt, fenster_audio_cb, fa, NULL, NULL, 0, &fa->queue);
 	for (int i = 0; i < 2; i++) {
 		AudioQueueBufferRef buffer = NULL;
-		AudioQueueAllocateBuffer(fa->queue, FENSTER_AUDIO_BUFSZ * 4, &buffer);
-		buffer->mAudioDataByteSize = FENSTER_AUDIO_BUFSZ * 4;
+		AudioQueueAllocateBuffer(fa->queue, sizeof(fa->buf), &buffer);
+		buffer->mAudioDataByteSize = sizeof(fa->buf);
 		memset(buffer->mAudioData, 0, buffer->mAudioDataByteSize);
 		AudioQueueEnqueueBuffer(fa->queue, buffer, 0, NULL);
 	}
@@ -51,16 +54,6 @@ int fenster_audio_available(struct fenster_audio *fa) {
 	if (dispatch_semaphore_wait(fa->drained, DISPATCH_TIME_NOW))
 		return 0;
 	return FENSTER_AUDIO_BUFSZ - fa->pos;
-}
-void fenster_audio_write(struct fenster_audio *fa, float *buf,
-									 size_t n) {
-	while (fa->pos < FENSTER_AUDIO_BUFSZ && n > 0) {
-		fa->buf[fa->pos++] = *buf++, n--;
-	}
-	if (fa->pos >= FENSTER_AUDIO_BUFSZ) {
-		fa->pos = 0;
-		dispatch_semaphore_signal(fa->full);
-	}
 }
 
 #include <time.h>
