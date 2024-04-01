@@ -154,6 +154,98 @@ void error_box(char *msg){
 
 	[[self openGLContext] flushBuffer];
 }
+- (BOOL)acceptsFirstResponder {
+	return YES;
+}
+
+- (void)mouseMoved:(NSEvent*) event {
+	
+	NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
+	NSLog(@"Mouse pos: %lf, %lf", point.x, point.y);
+	
+}
+
+- (void) mouseDragged: (NSEvent*) event {
+	
+	NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
+	NSLog(@"Mouse pos: %lf, %lf", point.x, point.y);
+	
+}
+
+- (void)scrollWheel: (NSEvent*) event  {
+	
+	NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
+	NSLog(@"Mouse wheel at: %lf, %lf. Delta: %lf", point.x, point.y, [event deltaY]);
+	
+}
+
+- (void) mouseDown: (NSEvent*) event {
+	
+	NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
+	NSLog(@"Left mouse down: %lf, %lf", point.x, point.y);
+	
+}
+
+- (void) mouseUp: (NSEvent*) event {
+	
+	NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
+	NSLog(@"Left mouse up: %lf, %lf", point.x, point.y);
+	
+}
+
+- (void) rightMouseDown: (NSEvent*) event {
+	
+	NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
+	NSLog(@"Right mouse down: %lf, %lf", point.x, point.y);
+	
+}
+
+- (void) rightMouseUp: (NSEvent*) event {
+	
+	NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
+	NSLog(@"Right mouse up: %lf, %lf", point.x, point.y);
+	
+}
+
+- (void)otherMouseDown: (NSEvent*) event {
+	
+	NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
+	NSLog(@"Middle mouse down: %lf, %lf", point.x, point.y);
+	
+}
+
+- (void)otherMouseUp: (NSEvent*) event {
+	
+	NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
+	NSLog(@"Middle mouse up: %lf, %lf", point.x, point.y);
+	
+}
+
+- (void) mouseEntered: (NSEvent*)event {
+	
+	NSLog(@"Mouse entered");
+	
+}
+
+- (void) mouseExited: (NSEvent*)event {
+	
+	NSLog(@"Mouse left");
+	
+}
+
+- (void) keyDown: (NSEvent*) event {
+	
+	if ([event isARepeat] == NO) {
+		NSLog(@"Key down: %d", [event keyCode]);
+	}
+	
+}
+
+- (void) keyUp: (NSEvent*) event {
+	
+	NSLog(@"Key up: %d", [event keyCode]);
+	
+}
 @end
 
 CVReturn displayLinkCallback(CVDisplayLinkRef displayLink, const CVTimeStamp *inNow, const CVTimeStamp *inOutputTime, CVOptionFlags flagsIn, CVOptionFlags *flagsOut, void *displayLinkContext)
