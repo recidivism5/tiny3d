@@ -233,18 +233,24 @@ void error_box(char *msg){
 	
 }
 
+static const uint8_t keycodes[128] = {
+	65,83,68,70,72,71,90,88,67,86,0,66,81,87,69,
+	82,89,84,49,50,51,52,54,53,61,57,55,45,56,48,
+	93,79,85,91,73,80,10,76,74,39,75,59,92,44,47,
+	78,77,46,9,32,96,8,0,27,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,26,2,3,127,0,5,0,4,0,20,19,18,17,0
+};
+
 - (void) keyDown: (NSEvent*) event {
-	
 	if ([event isARepeat] == NO) {
-		NSLog(@"Key down: %d", [event keyCode]);
+		keydown(keycodes[[event keyCode]]);
 	}
-	
 }
 
 - (void) keyUp: (NSEvent*) event {
-	
-	NSLog(@"Key up: %d", [event keyCode]);
-	
+	keyup(keycodes[[event keyCode]]);
 }
 @end
 

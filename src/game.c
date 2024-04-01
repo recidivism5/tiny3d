@@ -11,7 +11,6 @@ void keyup(int key){
 }
 
 void update(double time, double deltaTime, int width, int height, int nSamples, signed short *samples){
-	printf("time: %lf\n",deltaTime);
 	static double audioTime = 0;
 	for (int i = 0; i < nSamples; i++){
 		samples[i*2] = SHRT_MAX * 0.025*sin(audioTime);
