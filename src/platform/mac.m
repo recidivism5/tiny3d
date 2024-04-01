@@ -270,6 +270,7 @@ static int swidth, sheight;
 	  backing:NSBackingStoreBuffered
 	  defer:NO];
    [window setTitle:@"OpenGL Window"];
+   [window setAcceptsMouseMovedEvents:YES];
 
    // Create the OpenGL view
    NSOpenGLPixelFormatAttribute attrs[] = {
