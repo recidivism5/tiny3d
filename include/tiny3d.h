@@ -45,6 +45,9 @@ extern void keydown(int key);
 extern void keyup(int key);
 extern void mousemove(int x, int y);
 
+bool is_mouse_locked(void);
+void lock_mouse(bool locked);
+
 //utility functions:
 void error_box(char *msg);
 void fatal_error(char *format, ...);

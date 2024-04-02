@@ -88,6 +88,21 @@ void error_box(char *msg){
    [alert release];
 }
 
+static bool mouse_is_locked = false;
+bool is_mouse_locked(void){
+	return mouse_is_locked;
+}
+void lock_mouse(bool locked){
+	mouse_is_locked = locked;
+	if (locked){
+		[NSCursor hide];
+		CGAssociateMouseAndMouseCursorPosition(false);
+	} else {
+		[NSCursor unhide];
+		CGAssociateMouseAndMouseCursorPosition(true);
+	}
+}
+
 @interface MyOpenGLView : NSOpenGLView
 @end
 @implementation MyOpenGLView
@@ -159,9 +174,12 @@ void error_box(char *msg){
 }
 
 - (void)mouseMoved:(NSEvent*) event {
-	NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
-	//NSLog(@"Mouse pos: %lf, %lf", point.x, point.y);
-	mousemove((int)point.x,(int)point.y);
+	if (mouse_is_locked){
+		mousemove([event deltaX],[event deltaY]);
+	} else {
+		NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
+		mousemove(point.x,point.y);
+	}
 }
 
 - (void) mouseDragged: (NSEvent*) event {
