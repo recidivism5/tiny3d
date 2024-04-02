@@ -252,9 +252,14 @@ static int swidth, sheight;
 @end
 @implementation AppDelegate
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
-   // Create the window
+	NSRect screenRect = [[NSScreen mainScreen] frame];
+	NSRect viewRect = NSMakeRect(0, 0, swidth, sheight);
+	NSRect windowRect = NSMakeRect(NSMidX(screenRect) - NSMidX(viewRect),
+									NSMidY(screenRect) - NSMidY(viewRect),
+									viewRect.size.width, 
+									viewRect.size.height);
    window = [[NSWindow alloc]
-	  initWithContentRect:NSMakeRect(0, 0, swidth, sheight)
+	  initWithContentRect:windowRect
 	  styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskClosable|NSWindowStyleMaskMiniaturizable|NSWindowStyleMaskResizable
 	  backing:NSBackingStoreBuffered
 	  defer:NO];
@@ -272,12 +277,11 @@ static int swidth, sheight;
 	  0
    };
    NSOpenGLPixelFormat* pixelFormat = [[NSOpenGLPixelFormat alloc] initWithAttributes:attrs];
-   glView = [[MyOpenGLView alloc] initWithFrame:NSMakeRect(0, 0, swidth, sheight) pixelFormat:pixelFormat];
+   glView = [[MyOpenGLView alloc] initWithFrame:viewRect pixelFormat:pixelFormat];
    [window setContentView:glView];
 
    // Show the window
    [window makeKeyAndOrderFront:nil];
-   [window center];
 
    GLint swapInt = 1;
    CVDisplayLinkRef displayLink;
