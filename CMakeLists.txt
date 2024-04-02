@@ -3,14 +3,7 @@ project(tiny3d C)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include_directories(include)
-if(WIN32)
-	set(PLATFORM_SRC "src/platform/windows.c")
-elseif(APPLE)
-	set(PLATFORM_SRC "src/platform/mac.m")
-else()
-	set(PLATFORM_SRC "src/platform/unix.c")
-endif()
-add_executable(${PROJECT_NAME} "src/tiny3d.c" "src/game.c" "src/tinymath.c" "src/whereami.c" ${PLATFORM_SRC})
+add_executable(${PROJECT_NAME} src/tiny3d.c src/game.c src/tinymath.c src/whereami.c ${PLATFORM_SRC})
 if(MSVC)
 	set_target_properties(
 		${PROJECT_NAME}
@@ -28,14 +21,34 @@ if(MSVC)
 	endif()
 endif()
 if (WIN32)
+	target_sources(${PROJECT_NAME} PRIVATE src/platform/windows.c)
 	target_link_libraries(${PROJECT_NAME} dxguid d3d11 d3dcompiler dwmapi uuid windowscodecs)
 else()
 	find_package(OpenGL REQUIRED)
 	include_directories(${OPENGL_INCLUDE_DIRS})
 endif()
-if(APPLE)	
+if(APPLE)
+	add_custom_command(
+		OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/app.icns
+		PRE_BUILD
+		COMMAND iconutil -c icns ${CMAKE_CURRENT_SOURCE_DIR}/app.iconset
+	)
+	set_target_properties(${PROJECT_NAME} PROPERTIES
+		MACOSX_BUNDLE TRUE
+		MACOSX_FRAMEWORK_IDENTIFIER org.cmake.ExecutableTarget
+		RESOURCE app.icns)
+	set(MACOSX_BUNDLE_ICON_FILE app.icns)
+	target_sources(${PROJECT_NAME} PRIVATE src/platform/mac.m ${CMAKE_CURRENT_SOURCE_DIR}/app.icns)
 	target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} m "-framework Cocoa -framework CoreVideo -framework AudioToolbox")
+	set_target_properties(${PROJECT_NAME} PROPERTIES MACOSX_BUNDLE TRUE)
+	# what a G: https://stackoverflow.com/questions/45048882/how-can-i-set-nshighresolutioncapable-in-info-plist-via-cmake
+	add_custom_command(
+		TARGET ${PROJECT_NAME}
+		POST_BUILD
+		COMMAND plutil -replace NSHighResolutionCapable -bool true "${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}.app/Contents/Info.plist"
+    )
 elseif(UNIX)
+	target_sources(${PROJECT_NAME} PRIVATE src/platform/unix.c)
 	target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} m X11)
 endif()
 

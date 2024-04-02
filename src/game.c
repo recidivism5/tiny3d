@@ -33,5 +33,6 @@ void update(double time, double deltaTime, int width, int height, int nSamples, 
 }
 
 int main(int argc, char **argv){
+	puts(local_path_to_absolute("joj.png"));
     open_window(640,480);
 }
