@@ -1,71 +1,36 @@
+#include <tiny3d.h>
+
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #define UNICODE
 #define COBJMACROS
 #include <windows.h>
-#include <d3d11.h>
-#include <d3dcompiler.h>
+#include <windowsx.h>
 #include <dwmapi.h>
 #include <wincodec.h>
-#define COBJMACROS
+#include <GL/gl.h>
+
 #include <mmdeviceapi.h>
 #include <audioclient.h>
-static IDXGISwapChain *swapChain;
-static ID3D11Device *device;
-static ID3D11DeviceContext *deviceContext;
-static ID3D11RenderTargetView *renderTargetView;
-static ID3D11DepthStencilView *depthStencilView;
-static ID3D11Texture2D *texture;
-static ID3D11ShaderResourceView *textureView;
-static ID3D11SamplerState *sampler;
-static ID3D11BlendState *blendState;
-static ID3D11RasterizerState *rasterizerState;
-static ID3D11InputLayout *layout;
-static ID3D11VertexShader *vshader;
-static ID3D11PixelShader *pshader;
-static ID3D11DepthStencilState *depthStencilState;
-typedef struct {
-    float position[2];
-    float texcoord[2];
-} Vertex;
 static const GUID _CLSID_MMDeviceEnumerator = {0xbcde0395, 0xe52f, 0x467c, {0x8e,0x3d, 0xc4,0x57,0x92,0x91,0x69,0x2e}};
 static const GUID _IID_IMMDeviceEnumerator = {0xa95664d2, 0x9614, 0x4f35, {0xa7,0x46, 0xde,0x8d,0xb6,0x36,0x17,0xe6}};
 static const GUID _IID_IAudioClient = {0x1cb9ad4c, 0xdbfa, 0x4c32, {0xb1,0x78, 0xc2,0xf5,0x68,0xa7,0x03,0xb2}};
 static const GUID _KSDATAFORMAT_SUBTYPE_IEEE_FLOAT = {0x00000003, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}};
+static const GUID _KSDATAFORMAT_SUBTYPE_PCM = {0x00000001,0x0000,0x0010,{0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}};
 static const GUID _IID_IAudioRenderClient = {0xf294acfc, 0x3146, 0x4483, {0xa7, 0xbf, 0xad, 0xdc, 0xa7, 0xc2, 0x60, 0xe2}};
 static IMMDeviceEnumerator *enu = NULL;
 static IMMDevice *dev = NULL;
 static IAudioClient *client = NULL;
 static IAudioRenderClient* renderClient = NULL;
-static void fill_audio_buffer(void){
-    UINT32 total;
-    UINT32 padding;
-    ASSERT(SUCCEEDED(client->lpVtbl->GetBufferSize(client, &total)));
-    ASSERT(SUCCEEDED(client->lpVtbl->GetCurrentPadding(client, &padding)));
-    UINT32 remaining = total - padding;
-    if (remaining){
-        struct Sample {
-            float left;
-            float right;
-        } *samples;
-        ASSERT(SUCCEEDED(renderClient->lpVtbl->GetBuffer(renderClient, remaining, (BYTE **)&samples)));
-        static double t = 0.0;
-        for (UINT32 i = 0; i < remaining; i++){
-            samples[i].left = 0.25f*(float)sin(t);
-            samples[i].right = samples[i].left;
-            t += 0.1;
-        }
-        ASSERT(SUCCEEDED(renderClient->lpVtbl->ReleaseBuffer(renderClient,remaining,0)));
-    }
-}
-static LARGE_INTEGER freq, tstart, t0, t1;
+
 void error_box(char *msg){
     MessageBoxA(0,msg,"Error",MB_ICONERROR);
 }
+
 uint32_t *load_image(bool flip_vertically, int *width, int *height, char *format, ...){
     va_list args;
     va_start(args,format);
-    assertPath = local_path_to_absolute_internal(format,args);
+    assertPath = local_path_to_absolute_vararg(format,args);
 
     static IWICImagingFactory2 *ifactory = 0;
     if (!ifactory){
@@ -105,26 +70,39 @@ uint32_t *load_image(bool flip_vertically, int *width, int *height, char *format
 
     return pixels;
 }
-void CreateRenderTargets(){
-    ID3D11Texture2D *backBuffer = 0;
-    ASSERT(SUCCEEDED(swapChain->lpVtbl->GetBuffer(swapChain, 0, &IID_ID3D11Texture2D, (void**)&backBuffer)));
 
-    ASSERT(SUCCEEDED(device->lpVtbl->CreateRenderTargetView(device, (ID3D11Resource *)backBuffer, 0, &renderTargetView)));
-
-    D3D11_TEXTURE2D_DESC depthStencilDesc;
-    backBuffer->lpVtbl->GetDesc(backBuffer, &depthStencilDesc);
-    backBuffer->lpVtbl->Release(backBuffer);
-
-    depthStencilDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-    depthStencilDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-
-    ID3D11Texture2D* depthStencil;
-
-    ASSERT(SUCCEEDED(device->lpVtbl->CreateTexture2D(device, &depthStencilDesc, 0, &depthStencil)));
-    ASSERT(SUCCEEDED(device->lpVtbl->CreateDepthStencilView(device, (ID3D11Resource *)depthStencil, 0, &depthStencilView)));
-
-    depthStencil->lpVtbl->Release(depthStencil);
+HWND gwnd;
+void captureMouse(){
+    RECT r;
+    GetClientRect(gwnd,&r);
+    ClientToScreen(gwnd,(POINT*)&r.left);
+    ClientToScreen(gwnd,(POINT*)&r.right);
+    ClipCursor(&r);
+    ShowCursor(0);
 }
+void releaseMouse(){
+    RECT r;
+    GetClientRect(gwnd,&r);
+    POINT p = {r.right/2,r.bottom/2};
+    ClientToScreen(gwnd,&p);
+    SetCursorPos(p.x,p.y);
+    ClipCursor(NULL);
+    ShowCursor(1);
+}
+
+static bool mouse_is_locked = false;
+bool is_mouse_locked(void){
+	return mouse_is_locked;
+}
+void lock_mouse(bool locked){
+	mouse_is_locked = locked;
+	if (locked){
+		captureMouse();
+	} else {
+        releaseMouse();
+	}
+}
+
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam){
     switch(msg){
         case WM_CREATE:{
@@ -138,211 +116,32 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam){
             GetWindowRect(hwnd,&wr);
             SetWindowPos(hwnd,0,wr.left,wr.top,wr.right-wr.left,wr.bottom-wr.top,SWP_FRAMECHANGED|SWP_NOMOVE|SWP_NOSIZE); //prevent initial white frame
 
-            UINT creationFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
-#ifndef _DEBUG
-            creationFlags |= D3D11_CREATE_DEVICE_DEBUG;
-#endif
-            D3D_FEATURE_LEVEL featureLevels[] = {D3D_FEATURE_LEVEL_11_0};
-            DXGI_SWAP_CHAIN_DESC swapChainDesc = {
-                .BufferDesc.Width = 0,
-                .BufferDesc.Height = 0,
-                .BufferDesc.RefreshRate.Numerator = 0,
-                .BufferDesc.RefreshRate.Denominator = 0,
-                .BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM,
-                .BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED,
-                .BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED,
+            HDC hdc = GetDC(hwnd);
+            ASSERT(hdc);
 
-                .SampleDesc.Count = 1,
-                .SampleDesc.Quality = 0,
+            PIXELFORMATDESCRIPTOR pfd = {0};
+            pfd.nSize = sizeof(pfd);
+            pfd.nVersion = 1;
+            pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+            pfd.iPixelType = PFD_TYPE_RGBA;
+            pfd.cColorBits = 32;
+            pfd.cDepthBits = 24;
+            pfd.cStencilBits = 8;
 
-                .BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
-                .BufferCount = 2,
+            int pixelFormat = ChoosePixelFormat(hdc,&pfd);
+            ASSERT(pixelFormat);
+            ASSERT(SetPixelFormat(hdc,pixelFormat,&pfd));
+            HGLRC hglrc = wglCreateContext(hdc);
+            ASSERT(hglrc);
+            ASSERT(wglMakeCurrent(hdc,hglrc));
 
-                .OutputWindow = hwnd,
-                .Windowed = TRUE,
-                .SwapEffect = DXGI_SWAP_EFFECT_DISCARD,
-                .Flags = 0
-            };
-            ASSERT(SUCCEEDED(D3D11CreateDeviceAndSwapChain(
-                0,
-                D3D_DRIVER_TYPE_HARDWARE,
-                0,
-                creationFlags,
-                featureLevels,
-                ARRAYSIZE(featureLevels),
-                D3D11_SDK_VERSION,
-                &swapChainDesc,
-                &swapChain,
-                &device,
-                0,
-                &deviceContext
-            )));
+            typedef BOOL(WINAPI * PFNWGLSWAPINTERVALEXTPROC) (int interval);
+            PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
+            ASSERT(wglSwapIntervalEXT);
+            wglSwapIntervalEXT(1); //enable vsync
 
-            {
-                IDXGIDevice* dxgiDevice;
-                device->lpVtbl->QueryInterface(device,&IID_IDXGIDevice,&dxgiDevice);
-                IDXGIAdapter* dxgiAdapter;
-                dxgiDevice->lpVtbl->GetAdapter(dxgiDevice,&dxgiAdapter);
-                IDXGIFactory* factory;
-                dxgiAdapter->lpVtbl->GetParent(dxgiAdapter,&IID_IDXGIFactory,&factory);
-                // disable silly Alt+Enter changing monitor resolution to match window size
-                factory->lpVtbl->MakeWindowAssociation(factory,hwnd,DXGI_MWA_NO_ALT_ENTER);
-                factory->lpVtbl->Release(factory);
-                dxgiAdapter->lpVtbl->Release(dxgiAdapter);
-                dxgiDevice->lpVtbl->Release(dxgiDevice);
-            }
+            ReleaseDC(hwnd,hdc);
 
-            {
-                D3D11_TEXTURE2D_DESC desc ={
-                    .Width = SCREEN_WIDTH,
-                    .Height = SCREEN_HEIGHT,
-                    .MipLevels = 1,
-                    .ArraySize = 1,
-                    .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
-                    .SampleDesc = { 1, 0 },
-                    .Usage = D3D11_USAGE_DEFAULT,
-                    .CPUAccessFlags = D3D11_CPU_ACCESS_WRITE,
-                    .BindFlags = D3D11_BIND_SHADER_RESOURCE,
-                };
-                device->lpVtbl->CreateTexture2D(device,&desc,0,&texture);
-                device->lpVtbl->CreateShaderResourceView(device,(ID3D11Resource *)texture,0,&textureView);
-            }
-
-            {
-                D3D11_SAMPLER_DESC desc =
-                {
-                    .Filter = D3D11_FILTER_MIN_MAG_MIP_POINT,
-                    .AddressU = D3D11_TEXTURE_ADDRESS_WRAP,
-                    .AddressV = D3D11_TEXTURE_ADDRESS_WRAP,
-                    .AddressW = D3D11_TEXTURE_ADDRESS_WRAP,
-                };
-
-                device->lpVtbl->CreateSamplerState(device,&desc,&sampler);
-            }
-
-            {
-                // enable alpha blending
-                D3D11_BLEND_DESC desc =
-                {
-                    .RenderTarget[0] =
-                    {
-                        .BlendEnable = 1,
-                        .SrcBlend = D3D11_BLEND_SRC_ALPHA,
-                        .DestBlend = D3D11_BLEND_INV_SRC_ALPHA,
-                        .BlendOp = D3D11_BLEND_OP_ADD,
-                        .SrcBlendAlpha = D3D11_BLEND_SRC_ALPHA,
-                        .DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA,
-                        .BlendOpAlpha = D3D11_BLEND_OP_ADD,
-                        .RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL,
-                },
-                };
-                device->lpVtbl->CreateBlendState(device,&desc,&blendState);
-            }
-
-            {
-                // disable culling
-                D3D11_RASTERIZER_DESC desc =
-                {
-                    .FillMode = D3D11_FILL_SOLID,
-                    .CullMode = D3D11_CULL_NONE,
-                };
-                device->lpVtbl->CreateRasterizerState(device,&desc,&rasterizerState);
-            }
-
-            {
-                // disable depth & stencil test
-                D3D11_DEPTH_STENCIL_DESC desc =
-                {
-                    .DepthEnable = FALSE,
-                    .DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL,
-                    .DepthFunc = D3D11_COMPARISON_LESS,
-                    .StencilEnable = FALSE,
-                    .StencilReadMask = D3D11_DEFAULT_STENCIL_READ_MASK,
-                    .StencilWriteMask = D3D11_DEFAULT_STENCIL_WRITE_MASK,
-                    // .FrontFace = ... 
-                    // .BackFace = ...
-                };
-                device->lpVtbl->CreateDepthStencilState(device,&desc,&depthStencilState);
-            }
-
-            CreateRenderTargets();
-
-            {
-                // these must match vertex shader input layout (VS_INPUT in vertex shader source below)
-                D3D11_INPUT_ELEMENT_DESC desc[] =
-                {
-                    {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(Vertex, position), D3D11_INPUT_PER_VERTEX_DATA, 0},
-                    {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(Vertex, texcoord), D3D11_INPUT_PER_VERTEX_DATA, 0},
-                };
-
-        #define STR2(x) #x
-        #define STR(x) STR2(x)
-                const char hlsl[] =
-                    "#line " STR(__LINE__) "                                  \n\n" // actual line number in this file for nicer error messages
-                    "                                                           \n"
-                    "struct VS_INPUT                                            \n"
-                    "{                                                          \n"
-                    "     float2 pos   : POSITION;                              \n" // these names must match D3D11_INPUT_ELEMENT_DESC array
-                    "     float2 uv    : TEXCOORD;                              \n"
-                    "};                                                         \n"
-                    "                                                           \n"
-                    "struct PS_INPUT                                            \n"
-                    "{                                                          \n"
-                    "  float4 pos   : SV_POSITION;                              \n" // these names do not matter, except SV_... ones
-                    "  float2 uv    : TEXCOORD;                                 \n"
-                    "};                                                         \n"
-                    "                                                           \n"
-                    "sampler sampler0 : register(s0);                           \n" // s0 = sampler bound to slot 0
-                    "                                                           \n"
-                    "Texture2D<float4> texture0 : register(t0);                 \n" // t0 = shader resource bound to slot 0
-                    "                                                           \n"
-                    "PS_INPUT vs(VS_INPUT input)                                \n"
-                    "{                                                          \n"
-                    "    PS_INPUT output;                                       \n"
-                    "    output.pos = float4(input.pos, 0, 1);                  \n"
-                    "    output.uv = input.uv;                                  \n"
-                    "    return output;                                         \n"
-                    "}                                                          \n"
-                    "                                                           \n"
-                    "float4 ps(PS_INPUT input) : SV_TARGET                      \n"
-                    "{                                                          \n"
-                    "    return texture0.Sample(sampler0, input.uv);            \n"
-                    "}                                                          \n";
-                ;
-
-                UINT flags = D3DCOMPILE_PACK_MATRIX_COLUMN_MAJOR | D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_WARNINGS_ARE_ERRORS;
-        #if _DEBUG
-                flags |= D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
-        #else
-                flags |= D3DCOMPILE_OPTIMIZATION_LEVEL3;
-        #endif
-
-                ID3DBlob* error;
-
-                ID3DBlob* vblob;
-                HRESULT hr = D3DCompile(hlsl, sizeof(hlsl), 0, 0, 0, "vs", "vs_5_0", flags, 0, &vblob, &error);
-                if (FAILED(hr))
-                {
-                    char *message = error->lpVtbl->GetBufferPointer(error);
-                    fatal_error(message);
-                }
-
-                ID3DBlob* pblob;
-                hr = D3DCompile(hlsl, sizeof(hlsl), 0, 0, 0, "ps", "ps_5_0", flags, 0, &pblob, &error);
-                if (FAILED(hr))
-                {
-                    char *message = error->lpVtbl->GetBufferPointer(error);
-                    fatal_error(message);
-                }
-
-                device->lpVtbl->CreateVertexShader(device,vblob->lpVtbl->GetBufferPointer(vblob),vblob->lpVtbl->GetBufferSize(vblob),0,&vshader);
-                device->lpVtbl->CreatePixelShader(device,pblob->lpVtbl->GetBufferPointer(pblob),pblob->lpVtbl->GetBufferSize(pblob),0,&pshader);
-                device->lpVtbl->CreateInputLayout(device,desc,ARRAYSIZE(desc),vblob->lpVtbl->GetBufferPointer(vblob),vblob->lpVtbl->GetBufferSize(vblob),&layout);
-
-                pblob->lpVtbl->Release(pblob);
-                vblob->lpVtbl->Release(vblob);
-            }
-            
             //init audio:
             {
                 ASSERT(SUCCEEDED(CoInitializeEx(0, 0)));
@@ -351,16 +150,16 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam){
                 ASSERT(SUCCEEDED(dev->lpVtbl->Activate(dev, &_IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&client)));
                 WAVEFORMATEXTENSIBLE fmtex = {0};
                 fmtex.Format.nChannels = 2;
-                fmtex.Format.nSamplesPerSec = 44100;
+                fmtex.Format.nSamplesPerSec = TINY3D_SAMPLE_RATE;
                 fmtex.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
-                fmtex.Format.wBitsPerSample = 32;
+                fmtex.Format.wBitsPerSample = 16;
                 fmtex.Format.nBlockAlign = (fmtex.Format.nChannels * fmtex.Format.wBitsPerSample) / 8;
                 fmtex.Format.nAvgBytesPerSec = fmtex.Format.nSamplesPerSec * fmtex.Format.nBlockAlign;
                 fmtex.Format.cbSize = 22;   /* WORD + DWORD + GUID */
-                fmtex.Samples.wValidBitsPerSample = 32;
+                fmtex.Samples.wValidBitsPerSample = 16;
                 fmtex.dwChannelMask = SPEAKER_FRONT_LEFT|SPEAKER_FRONT_RIGHT;
-                fmtex.SubFormat = _KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
-                REFERENCE_TIME dur = (REFERENCE_TIME)(((double)2048) / (((double)fmtex.Format.nSamplesPerSec) * (1.0/10000000.0)));
+                fmtex.SubFormat = _KSDATAFORMAT_SUBTYPE_PCM;
+                REFERENCE_TIME dur = (REFERENCE_TIME)(((double)TINY3D_AUDIO_BUFSZ) / (((double)fmtex.Format.nSamplesPerSec) * (1.0/10000000.0)));
                 ASSERT(SUCCEEDED(client->lpVtbl->Initialize(
                     client,
                     AUDCLNT_SHAREMODE_SHARED,
@@ -369,101 +168,115 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam){
                 ASSERT(SUCCEEDED(client->lpVtbl->GetService(client, &_IID_IAudioRenderClient, (void**)&renderClient)));
                 ASSERT(SUCCEEDED(client->lpVtbl->Start(client)));
             }
+
+            //register raw mouse input
+            #define HID_USAGE_PAGE_GENERIC ((unsigned short) 0x01)
+            #define HID_USAGE_GENERIC_MOUSE ((unsigned short) 0x02)
+            RAWINPUTDEVICE rid = {
+                .usUsagePage = HID_USAGE_PAGE_GENERIC,
+                .usUsage = HID_USAGE_GENERIC_MOUSE,
+                .dwFlags = RIDEV_INPUTSINK,
+                .hwndTarget = hwnd
+            };
+            RegisterRawInputDevices(&rid, 1, sizeof(rid));
             break;
         }
         case WM_PAINT:{
-            QueryPerformanceCounter(&t1);
-            update((double)(t1.QuadPart-tstart.QuadPart) / (double)freq.QuadPart, (double)(t1.QuadPart-t0.QuadPart) / (double)freq.QuadPart);
-            t0 = t1;
+            RECT cr = {0};
+            GetClientRect(hwnd,&cr);
+            int width = cr.right-cr.left;
+            int height = cr.bottom-cr.top;
 
-            fill_audio_buffer();
+            static LARGE_INTEGER freq,tstart,t0,t1;
+            static bool started = false;
+            if (!started){
+                QueryPerformanceFrequency(&freq);
+                QueryPerformanceCounter(&tstart);
+                t0 = tstart;
+                t1 = tstart;
+                started = true;
+            } else {
+                QueryPerformanceCounter(&t1);
+            }
 
-            deviceContext->lpVtbl->OMSetRenderTargets(deviceContext, 1, &renderTargetView, depthStencilView);
-            FLOAT clearColor[4] = {0.1f, 0.2f, 0.6f, 1.0f};
-            deviceContext->lpVtbl->ClearRenderTargetView(deviceContext, renderTargetView, clearColor);
-            deviceContext->lpVtbl->ClearDepthStencilView(deviceContext, depthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
+            UINT32 total;
+            UINT32 padding;
+            ASSERT(SUCCEEDED(client->lpVtbl->GetBufferSize(client, &total)));
+            ASSERT(SUCCEEDED(client->lpVtbl->GetCurrentPadding(client, &padding)));
+            UINT32 remaining = total - padding;
+            signed short *samples;
+            ASSERT(SUCCEEDED(renderClient->lpVtbl->GetBuffer(renderClient, remaining, (BYTE **)&samples)));
 
-            {
-                ID3D11Buffer* vbuffer;
-                Vertex data[] =
-                {
-                    { {-1.0f, 1.0f }, { 0.0f, 1.0f } },
-                    { {-1.0f, -1.0f }, {  0.0f,  0.0f }},
-                    { { 1.0f, -1.0f }, { 1.0f,  0.0f }},
+            #if USE_GL
+                update((double)(t1.QuadPart-tstart.QuadPart) / (double)freq.QuadPart, (double)(t1.QuadPart-t0.QuadPart) / (double)freq.QuadPart, width, height, (int)remaining, samples);
+            #else
+                update((double)(t1.QuadPart-tstart.QuadPart) / (double)freq.QuadPart, (double)(t1.QuadPart-t0.QuadPart) / (double)freq.QuadPart, (int)remaining, samples);
+                
+                glViewport(0,0,width,height);
 
-                    { {1.0f, -1.0f}, { 1.0f, 0.0f }},
-                    { {1.0f, 1.0f}, {  1.0f,  1.0f }},
-                    { {-1.0f, 1.0f}, { 0.0f,  1.0f }},
-                };
+                glClearColor(0.0f,0.0f,1.0f,1.0f);
+                glClear(GL_COLOR_BUFFER_BIT);
 
-                D3D11_BUFFER_DESC desc =
-                {
-                    .ByteWidth = sizeof(data),
-                    .Usage = D3D11_USAGE_IMMUTABLE,
-                    .BindFlags = D3D11_BIND_VERTEX_BUFFER,
-                };
-
-                D3D11_SUBRESOURCE_DATA initial = { .pSysMem = data };
-                device->lpVtbl->CreateBuffer(device,&desc,&initial,&vbuffer);
-
-                deviceContext->lpVtbl->IASetInputLayout(deviceContext,layout);
-                deviceContext->lpVtbl->IASetPrimitiveTopology(deviceContext,D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-                UINT stride = sizeof(Vertex);
-                UINT offset = 0;
-                deviceContext->lpVtbl->IASetVertexBuffers(deviceContext,0,1,&vbuffer,&stride,&offset);
-
-                deviceContext->lpVtbl->VSSetShader(deviceContext,vshader,0,0);
-
-                RECT cr;
-                GetClientRect(hwnd,&cr);
-                int cwidth = cr.right-cr.left;
-                int cheight = cr.bottom-cr.top;
+                static GLuint texture = 0;
+                if (!texture){
+                    glGenTextures(1,&texture);
+                    glBindTexture(GL_TEXTURE_2D,texture);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+                }
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCREEN_WIDTH, SCREEN_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, screen);
                 int scale = 1;
-                while (SCREEN_WIDTH*scale <= cwidth && SCREEN_HEIGHT*scale <= cheight){
+                while (SCREEN_WIDTH*scale <= width && SCREEN_HEIGHT*scale <= height){
                     scale++;
                 }
                 scale--;
                 int scaledWidth = scale * SCREEN_WIDTH;
                 int scaledHeight = scale * SCREEN_HEIGHT;
-                D3D11_VIEWPORT viewport = {
-                    .TopLeftX = (FLOAT)(cwidth/2-scaledWidth/2),
-                    .TopLeftY = (FLOAT)(cheight/2-scaledHeight/2),
-                    .Width = (FLOAT)scaledWidth,
-                    .Height = (FLOAT)scaledHeight,
-                    .MinDepth = 0,
-                    .MaxDepth = 1,
-                };
-                deviceContext->lpVtbl->RSSetViewports(deviceContext,1,&viewport);
-                deviceContext->lpVtbl->RSSetState(deviceContext,rasterizerState);
+                int x = width/2-scaledWidth/2;
+                int y = height/2-scaledHeight/2;
+                glViewport(x,y,scaledWidth,scaledHeight);
+                glEnable(GL_TEXTURE_2D);
+                glBegin(GL_QUADS);
+                glTexCoord2f(0,0); glVertex2f(-1,-1);
+                glTexCoord2f(1,0); glVertex2f(1,-1);
+                glTexCoord2f(1,1); glVertex2f(1,1);
+                glTexCoord2f(0,1); glVertex2f(-1,1);
+                glEnd();
+            #endif
+            ASSERT(SUCCEEDED(renderClient->lpVtbl->ReleaseBuffer(renderClient,remaining,0)));
+            t0 = t1;
 
-                deviceContext->lpVtbl->PSSetSamplers(deviceContext,0,1,&sampler);
-                deviceContext->lpVtbl->UpdateSubresource(deviceContext,(ID3D11Resource *)texture,0,0,screen,SCREEN_WIDTH*sizeof(*screen),0);
-                deviceContext->lpVtbl->PSSetShaderResources(deviceContext,0,1,&textureView);
-                deviceContext->lpVtbl->PSSetShader(deviceContext,pshader,0,0);
+            HDC hdc = GetDC(hwnd);
+            ASSERT(hdc);
+            SwapBuffers(hdc);
+            ReleaseDC(hwnd,hdc);
 
-                //deviceContext->lpVtbl->OMSetBlendState(deviceContext,blendState,0,~0U);
-                deviceContext->lpVtbl->OMSetDepthStencilState(deviceContext,depthStencilState,0);
-
-                deviceContext->lpVtbl->Draw(deviceContext,6,0);
-
-                vbuffer->lpVtbl->Release(vbuffer); //TODO: find out if this is shit
-            }
-
-            swapChain->lpVtbl->Present(swapChain, 1, 0);
             return 0;
         }
         case WM_DESTROY:{
             PostQuitMessage(0);
             break;
         }
-        case WM_SIZE:{
-            deviceContext->lpVtbl->OMSetRenderTargets(deviceContext,0,0,0);
-            renderTargetView->lpVtbl->Release(renderTargetView);
-            depthStencilView->lpVtbl->Release(depthStencilView);
-            ASSERT(SUCCEEDED(swapChain->lpVtbl->ResizeBuffers(swapChain,0,0,0,DXGI_FORMAT_UNKNOWN,0)));
-            CreateRenderTargets();
-            break;
+        case WM_MOUSEMOVE:{
+            if (!mouse_is_locked){
+                mousemove(GET_X_LPARAM(lparam),GET_Y_LPARAM(lparam));
+            }
+            return 0;
         }
+        case WM_INPUT:{
+            UINT size = sizeof(RAWINPUT);
+			static RAWINPUT raw[sizeof(RAWINPUT)];
+			GetRawInputData((HRAWINPUT)lparam, RID_INPUT, raw, &size, sizeof(RAWINPUTHEADER));
+            if (raw->header.dwType == RIM_TYPEMOUSE){
+                if (mouse_is_locked){
+                    mousemove(raw->data.mouse.lLastX,raw->data.mouse.lLastY);
+                }
+                //cameraRotate(&cam, raw->data.mouse.lLastX,raw->data.mouse.lLastY, -0.002f);
+                //if (raw->data.mouse.usButtonFlags & RI_MOUSE_WHEEL)
+                //	input.mouse.wheel = (*(short*)&raw->data.mouse.usButtonData) / WHEEL_DELTA;
+            }
+		return 0;
+	}
         case WM_KEYDOWN:{
             if (!(HIWORD(lparam) & KF_REPEAT)){
                 keydown((int)wparam);
@@ -477,6 +290,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam){
     }
     return DefWindowProcW(hwnd, msg, wparam, lparam);
 }
+
 void open_window(int scale){
     WNDCLASSEXW wcex = {
         .cbSize = sizeof(wcex),
@@ -490,7 +304,6 @@ void open_window(int scale){
     };
     ASSERT(RegisterClassExW(&wcex));
 
-    HWND hwnd;
     ASSERT(scale >= 0);
     if (scale > 0){
 
@@ -499,7 +312,7 @@ void open_window(int scale){
         LONG initialWidth = initialRect.right - initialRect.left;
         LONG initialHeight = initialRect.bottom - initialRect.top;
 
-        hwnd = CreateWindowExW(
+        gwnd = CreateWindowExW(
             0, //WS_EX_OVERLAPPEDWINDOW fucks up the borders when maximized
             wcex.lpszClassName,
             wcex.lpszClassName,
@@ -511,7 +324,7 @@ void open_window(int scale){
             0, 0, wcex.hInstance, 0
         );
     } else {
-        hwnd = CreateWindowExW(
+        gwnd = CreateWindowExW(
             0, //WS_EX_OVERLAPPEDWINDOW fucks up the borders when maximized
             wcex.lpszClassName,
             wcex.lpszClassName,
@@ -523,11 +336,7 @@ void open_window(int scale){
             0, 0, wcex.hInstance, 0
         );
     }
-    ASSERT(hwnd);
-
-    QueryPerformanceFrequency(&freq);
-    QueryPerformanceCounter(&tstart);
-    t0 = tstart;
+    ASSERT(gwnd);
 
     MSG msg;
     while (GetMessageW(&msg,0,0,0)){

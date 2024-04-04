@@ -6,12 +6,10 @@
 #import <CoreVideo/CVDisplayLink.h>
 
 #include <AudioToolbox/AudioQueue.h>
-#define FENSTER_SAMPLE_RATE 44100
-#define FENSTER_AUDIO_BUFSZ 8192
 struct fenster_audio {
 	AudioQueueRef queue;
 	size_t pos;
-	signed short buf[FENSTER_AUDIO_BUFSZ*2];
+	signed short buf[TINY3D_AUDIO_BUFSZ*2];
 	dispatch_semaphore_t drained;
 	dispatch_semaphore_t full;
 } audioState;
@@ -24,7 +22,7 @@ static void fenster_audio_cb(void *p, AudioQueueRef q, AudioQueueBufferRef b) {
 }
 int fenster_audio_open(struct fenster_audio *fa) {
 	AudioStreamBasicDescription fmt = {0};
-	fmt.mSampleRate = FENSTER_SAMPLE_RATE;
+	fmt.mSampleRate = TINY3D_SAMPLE_RATE;
     fmt.mFormatID = kAudioFormatLinearPCM;
     fmt.mFormatFlags = kLinearPCMFormatFlagIsSignedInteger;
     fmt.mBytesPerFrame = (16 * 2) / 8;
@@ -53,7 +51,7 @@ void fenster_audio_close(struct fenster_audio *fa) {
 int fenster_audio_available(struct fenster_audio *fa) {
 	if (dispatch_semaphore_wait(fa->drained, DISPATCH_TIME_NOW))
 		return 0;
-	return FENSTER_AUDIO_BUFSZ - fa->pos;
+	return TINY3D_AUDIO_BUFSZ - fa->pos;
 }
 
 #include <time.h>
@@ -160,7 +158,7 @@ void lock_mouse(bool locked){
 	#endif
 
 	audioState.pos += nSamples;
-	if (audioState.pos >= FENSTER_AUDIO_BUFSZ){
+	if (audioState.pos >= TINY3D_AUDIO_BUFSZ){
 		audioState.pos = 0;
 		dispatch_semaphore_signal(audioState.full);
 	}

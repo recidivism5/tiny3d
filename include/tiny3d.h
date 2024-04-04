@@ -14,7 +14,10 @@
 #include <whereami.h>
 #include <tinymath.h>
 
-#define USE_GL 1
+#define TINY3D_SAMPLE_RATE 44100
+#define TINY3D_AUDIO_BUFSZ 8192
+
+#define USE_GL 0
 #if USE_GL
 	#if __APPLE__
 		#include <OpenGL/OpenGL.h>
@@ -53,6 +56,7 @@ void error_box(char *msg);
 void fatal_error(char *format, ...);
 char *format_string(char *format, ...);
 char *local_path_to_absolute(char *format, ...);
+char *local_path_to_absolute_vararg(char *format, va_list args);
 FILE *fopen_relative(char *format, ...);
 unsigned char *load_file(int *size, char *format, ...);
 char *load_file_as_cstring(char *format, ...);

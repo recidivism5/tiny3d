@@ -31,7 +31,7 @@ char *format_string(char *format, ...){
 
 static char root[4096];
 static char *rootEnd = 0;
-static char *local_path_to_absolute_internal(char *format, va_list args){
+char *local_path_to_absolute_vararg(char *format, va_list args){
 	int len;
 	if (!rootEnd){
 		len = wai_getExecutablePath(0,0,0);
@@ -59,7 +59,7 @@ char *local_path_to_absolute(char *format, ...){
 	va_list args;
 	va_start(args,format);
 
-	char *path = local_path_to_absolute_internal(format,args);
+	char *path = local_path_to_absolute_vararg(format,args);
 
 	va_end(args);
 
@@ -70,7 +70,7 @@ FILE *fopen_relative(char *format, ...){
 	va_list args;
 	va_start(args,format);
 
-	assertPath = local_path_to_absolute_internal(format,args);
+	assertPath = local_path_to_absolute_vararg(format,args);
 	FILE *f = fopen(assertPath,"rb");
 	ASSERT_FILE(f);
 
@@ -83,7 +83,7 @@ unsigned char *load_file(int *size, char *format, ...){
 	va_list args;
 	va_start(args,format);
 
-	assertPath = local_path_to_absolute_internal(format,args);
+	assertPath = local_path_to_absolute_vararg(format,args);
 	FILE *f = fopen(assertPath,"rb");
 	ASSERT_FILE(f);
 	fseek(f,0,SEEK_END);
@@ -106,7 +106,7 @@ char *load_file_as_cstring(char *format, ...){
 	va_list args;
 	va_start(args,format);
 
-	assertPath = local_path_to_absolute_internal(format,args);
+	assertPath = local_path_to_absolute_vararg(format,args);
 	FILE *f = fopen(assertPath,"rb");
 	ASSERT_FILE(f);
 	fseek(f,0,SEEK_END);

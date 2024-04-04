@@ -20,14 +20,14 @@ if(MSVC)
 		set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
 	endif()
 endif()
+
+find_package(OpenGL REQUIRED)
+include_directories(${OPENGL_INCLUDE_DIRS})
+
 if (WIN32)
 	target_sources(${PROJECT_NAME} PRIVATE src/platform/windows.c)
-	target_link_libraries(${PROJECT_NAME} dxguid d3d11 d3dcompiler dwmapi uuid windowscodecs)
-else()
-	find_package(OpenGL REQUIRED)
-	include_directories(${OPENGL_INCLUDE_DIRS})
-endif()
-if(APPLE)
+	target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} dwmapi uuid windowscodecs)
+elseif(APPLE)
 	add_custom_command(
 		OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/app.icns
 		PRE_BUILD
