@@ -103,6 +103,19 @@ void lock_mouse(bool locked){
 	}
 }
 
+static const uint8_t keycodes[] = {
+    0,27,49,50,51,52,53,54,55,56,57,48,45,61,8,9,81,87,69,82,84,89,85,73,79,
+    80,91,93,10,0,65,83,68,70,71,72,74,75,76,59,39,96,0,92,90,88,67,86,66,78,
+    77,44,46,47,0,0,0,32,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,17,3,0,20,0,19,0,5,18,4,26,127
+};
+
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam){
     switch(msg){
         case WM_CREATE:{
@@ -275,16 +288,24 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam){
                 //if (raw->data.mouse.usButtonFlags & RI_MOUSE_WHEEL)
                 //	input.mouse.wheel = (*(short*)&raw->data.mouse.usButtonData) / WHEEL_DELTA;
             }
-		return 0;
-	}
+		    return 0;
+	    }
+        case WM_LBUTTONDOWN:{
+            keydown(KEY_MOUSE_LEFT);
+            return 0;
+        }
+        case WM_RBUTTONDOWN:{
+            keydown(KEY_MOUSE_RIGHT);
+            return 0;
+        }
         case WM_KEYDOWN:{
             if (!(HIWORD(lparam) & KF_REPEAT)){
-                keydown((int)wparam);
+                keydown((int)keycodes[HIWORD(lparam) & 0x1ff]);
             }
             break;
         }
         case WM_KEYUP:{
-            keyup((int)wparam);
+            keyup((int)keycodes[HIWORD(lparam) & 0x1ff]);
             break;
         }
     }
