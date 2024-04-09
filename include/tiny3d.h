@@ -27,14 +27,14 @@
 	#endif
 	void open_window(int width, int height); //width = 0: fullscreen
 	//define this:
-	extern void update(double time, double deltaTime, int width, int height, int nSamples, signed short *samples);
+	extern void update(double time, double deltaTime, int width, int height, int nFrames, signed short *frames);
 #else
 	#define SCREEN_WIDTH 256
 	#define SCREEN_HEIGHT 192
 	extern uint32_t screen[SCREEN_WIDTH*SCREEN_HEIGHT];
 	void open_window(int scale); //scale = 0: fullscreen
 	//define this:
-	extern void update(double time, double deltaTime, int nSamples, signed short *samples);
+	extern void update(double time, double deltaTime, int nFrames, signed short *frames);
 
 	//drawing functions:
 	void clear_screen(uint32_t color);
@@ -61,6 +61,7 @@ FILE *fopen_relative(char *format, ...);
 unsigned char *load_file(int *size, char *format, ...);
 char *load_file_as_cstring(char *format, ...);
 uint32_t *load_image(bool flip_vertically, int *width, int *height, char *format, ...);
+int16_t *load_audio(int *nFrames, char *format, ...);
 
 #define COUNT(arr) (sizeof(arr)/sizeof(*arr))
 #define MIN(a,b) ((a) < (b) ? (a) : (b))

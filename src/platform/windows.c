@@ -8,6 +8,10 @@
 #include <windowsx.h>
 #include <dwmapi.h>
 #include <wincodec.h>
+#include <mfapi.h>
+#include <mfidl.h>
+#include <mfreadwrite.h>
+#include <mferror.h>
 #include <GL/gl.h>
 
 #include <mmdeviceapi.h>
@@ -23,6 +27,21 @@ static IMMDevice *dev = NULL;
 static IAudioClient *client = NULL;
 static IAudioRenderClient* renderClient = NULL;
 
+static bool coInitCalled = false;
+static bool mfStartupCalled = false;
+void safe_coinit(void){
+    if (!coInitCalled){
+        ASSERT_FILE(SUCCEEDED(CoInitialize(0)));
+        coInitCalled = true;
+    }
+}
+void safe_mfstartup(void){
+    if (!mfStartupCalled){
+        ASSERT_FILE(SUCCEEDED(MFStartup(MF_VERSION, MFSTARTUP_NOSOCKET)));
+        mfStartupCalled = true;
+    }
+}
+
 void error_box(char *msg){
     MessageBoxA(0,msg,"Error",MB_ICONERROR);
 }
@@ -31,6 +50,8 @@ uint32_t *load_image(bool flip_vertically, int *width, int *height, char *format
     va_list args;
     va_start(args,format);
     assertPath = local_path_to_absolute_vararg(format,args);
+
+    safe_coinit();
 
     static IWICImagingFactory2 *ifactory = 0;
     if (!ifactory){
@@ -69,6 +90,144 @@ uint32_t *load_image(bool flip_vertically, int *width, int *height, char *format
     va_end(args);
 
     return pixels;
+}
+
+int16_t *load_audio(int *nFrames, char *format, ...){
+    va_list args;
+    va_start(args,format);
+    assertPath = local_path_to_absolute_vararg(format,args);
+
+    IMFSourceReader *pReader = NULL;
+    
+    safe_coinit();
+
+    safe_mfstartup();
+
+    {
+        size_t len = strlen(assertPath)+1;
+        WCHAR *wpath = malloc(len*sizeof(*wpath));
+        ASSERT(wpath);
+        mbstowcs(wpath,assertPath,len);
+        ASSERT_FILE(SUCCEEDED(MFCreateSourceReaderFromURL(wpath, NULL, &pReader)));
+        free(wpath);
+    }
+
+    IMFMediaType *pUncompressedAudioType = NULL;
+    IMFMediaType *pPartialType = NULL;
+
+    // Select the first audio stream, and deselect all other streams.
+    ASSERT_FILE(SUCCEEDED(pReader->lpVtbl->SetStreamSelection(pReader, (DWORD)MF_SOURCE_READER_ALL_STREAMS, FALSE)));
+    ASSERT_FILE(SUCCEEDED(pReader->lpVtbl->SetStreamSelection(pReader, (DWORD)MF_SOURCE_READER_FIRST_AUDIO_STREAM, TRUE)));
+
+    // Create a partial media type that specifies uncompressed PCM audio.
+    ASSERT_FILE(SUCCEEDED(MFCreateMediaType(&pPartialType)));
+    ASSERT_FILE(SUCCEEDED(pPartialType->lpVtbl->SetGUID(pPartialType, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio)));
+    ASSERT_FILE(SUCCEEDED(pPartialType->lpVtbl->SetGUID(pPartialType, &MF_MT_SUBTYPE, &MFAudioFormat_PCM)));
+    ASSERT_FILE(SUCCEEDED(pPartialType->lpVtbl->SetUINT32(pPartialType, &MF_MT_AUDIO_SAMPLES_PER_SECOND, TINY3D_SAMPLE_RATE)));
+    ASSERT_FILE(SUCCEEDED(pPartialType->lpVtbl->SetUINT32(pPartialType, &MF_MT_AUDIO_BITS_PER_SAMPLE, 16)));
+    ASSERT_FILE(SUCCEEDED(pPartialType->lpVtbl->SetUINT32(pPartialType, &MF_MT_AUDIO_VALID_BITS_PER_SAMPLE, 16)));
+    ASSERT_FILE(SUCCEEDED(pPartialType->lpVtbl->SetUINT32(pPartialType, &MF_MT_AUDIO_NUM_CHANNELS, 2)));
+
+    // Set this type on the source reader. The source reader will
+    // load the necessary decoder.
+    ASSERT_FILE(SUCCEEDED(pReader->lpVtbl->SetCurrentMediaType(pReader, (DWORD)MF_SOURCE_READER_FIRST_AUDIO_STREAM, NULL, pPartialType)));
+
+    // Get the complete uncompressed format.
+    ASSERT_FILE(SUCCEEDED(pReader->lpVtbl->GetCurrentMediaType(pReader, (DWORD)MF_SOURCE_READER_FIRST_AUDIO_STREAM, &pUncompressedAudioType)));
+
+    // Ensure the stream is selected.
+    ASSERT_FILE(SUCCEEDED(pReader->lpVtbl->SetStreamSelection(pReader, (DWORD)MF_SOURCE_READER_FIRST_AUDIO_STREAM, TRUE)));
+
+    UINT32 v;
+    pUncompressedAudioType->lpVtbl->GetUINT32(pUncompressedAudioType, &MF_MT_AUDIO_SAMPLES_PER_SECOND, &v);
+    printf("uncompressed sample rate: %d\n",v);
+    pUncompressedAudioType->lpVtbl->GetUINT32(pUncompressedAudioType, &MF_MT_AUDIO_BITS_PER_SAMPLE, &v);
+    printf("bits per sample: %d\n",v);
+    pUncompressedAudioType->lpVtbl->GetUINT32(pUncompressedAudioType, &MF_MT_AUDIO_NUM_CHANNELS, &v);
+    printf("num channels: %d\n",v);
+
+    int nSamples = 0;
+    DWORD cbAudioData = 0;
+    DWORD cbBuffer = 0;
+    BYTE *pAudioData = NULL;
+    IMFSample *pSample = NULL;
+    IMFMediaBuffer *pBuffer = NULL;
+    while (1){
+        DWORD dwFlags = 0;
+        ASSERT_FILE(SUCCEEDED(pReader->lpVtbl->ReadSample(pReader, (DWORD)MF_SOURCE_READER_FIRST_AUDIO_STREAM, 0, NULL, &dwFlags, NULL, &pSample)));
+
+        if (dwFlags & MF_SOURCE_READERF_CURRENTMEDIATYPECHANGED)
+        {
+            fatal_error("Type change - not supported by WAVE file format.\n");
+            break;
+        }
+        if (dwFlags & MF_SOURCE_READERF_ENDOFSTREAM)
+        {
+            break;
+        }
+
+        if (pSample == NULL)
+        {
+            continue;
+        }
+
+        DWORD totalLen;
+        ASSERT_FILE(SUCCEEDED(pSample->lpVtbl->GetTotalLength(pSample,&totalLen)));
+
+        nSamples += totalLen/sizeof(int16_t);
+    }
+
+    PROPVARIANT var;
+    var.vt = VT_I8;
+    var.hVal.QuadPart = 0;
+    ASSERT_FILE(SUCCEEDED(pReader->lpVtbl->SetCurrentPosition(pReader,&GUID_NULL,&var)));
+    int16_t *out = malloc(nSamples*sizeof(*out));
+    ASSERT_FILE(out);
+    BYTE *outp = (BYTE *)out;
+
+    *nFrames = nSamples/2;
+    printf("nFrames: %d\n",*nFrames);
+
+    while (1){
+        DWORD dwFlags = 0;
+        ASSERT_FILE(SUCCEEDED(pReader->lpVtbl->ReadSample(pReader, (DWORD)MF_SOURCE_READER_FIRST_AUDIO_STREAM, 0, NULL, &dwFlags, NULL, &pSample)));
+
+        if (dwFlags & MF_SOURCE_READERF_CURRENTMEDIATYPECHANGED)
+        {
+            fatal_error("Type change - not supported by WAVE file format.\n");
+            break;
+        }
+        if (dwFlags & MF_SOURCE_READERF_ENDOFSTREAM)
+        {
+            break;
+        }
+
+        if (pSample == NULL)
+        {
+            continue;
+        }
+
+        ASSERT_FILE(SUCCEEDED(pSample->lpVtbl->ConvertToContiguousBuffer(pSample, &pBuffer)));
+
+        ASSERT_FILE(SUCCEEDED(pBuffer->lpVtbl->Lock(pBuffer, &pAudioData, NULL, &cbBuffer)));
+
+        memcpy(outp,pAudioData,cbBuffer);
+        outp += cbBuffer;
+        
+        ASSERT_FILE(SUCCEEDED(pBuffer->lpVtbl->Unlock(pBuffer)));
+
+        pBuffer->lpVtbl->Release(pBuffer);
+        pSample->lpVtbl->Release(pSample);
+    }
+
+    pUncompressedAudioType->lpVtbl->Release(pUncompressedAudioType);
+    pPartialType->lpVtbl->Release(pPartialType);
+
+    pReader->lpVtbl->Release(pReader);
+
+    va_end(args);
+
+    return out;
 }
 
 HWND gwnd;
@@ -157,7 +316,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam){
 
             //init audio:
             {
-                ASSERT(SUCCEEDED(CoInitializeEx(0, 0)));
+                safe_coinit();
                 ASSERT(SUCCEEDED(CoCreateInstance(&_CLSID_MMDeviceEnumerator, NULL, CLSCTX_ALL, &_IID_IMMDeviceEnumerator, (void**)&enu)));
                 ASSERT(SUCCEEDED(enu->lpVtbl->GetDefaultAudioEndpoint(enu, eRender, eConsole, &dev)));
                 ASSERT(SUCCEEDED(dev->lpVtbl->Activate(dev, &_IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&client)));
