@@ -6,14 +6,6 @@ int16_t *doodoo;
 int doodooFrames;
 int curFrame = 0;
 
-typedef struct {
-	int16_t *frames;
-	int nFrames;
-	int curFrame;
-} AudioSource;
-AudioSource audioSources[16];
-int nAudioSources = 0;
-
 void keydown(int key){
 	printf("keydown: %d\n",key);
 	if (key == 'F'){
