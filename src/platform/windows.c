@@ -125,7 +125,6 @@ int16_t *load_audio(int *nFrames, char *format, ...){
     ASSERT_FILE(SUCCEEDED(pPartialType->lpVtbl->SetGUID(pPartialType, &MF_MT_SUBTYPE, &MFAudioFormat_PCM)));
     ASSERT_FILE(SUCCEEDED(pPartialType->lpVtbl->SetUINT32(pPartialType, &MF_MT_AUDIO_SAMPLES_PER_SECOND, TINY3D_SAMPLE_RATE)));
     ASSERT_FILE(SUCCEEDED(pPartialType->lpVtbl->SetUINT32(pPartialType, &MF_MT_AUDIO_BITS_PER_SAMPLE, 16)));
-    ASSERT_FILE(SUCCEEDED(pPartialType->lpVtbl->SetUINT32(pPartialType, &MF_MT_AUDIO_VALID_BITS_PER_SAMPLE, 16)));
     ASSERT_FILE(SUCCEEDED(pPartialType->lpVtbl->SetUINT32(pPartialType, &MF_MT_AUDIO_NUM_CHANNELS, 2)));
 
     // Set this type on the source reader. The source reader will
@@ -137,14 +136,6 @@ int16_t *load_audio(int *nFrames, char *format, ...){
 
     // Ensure the stream is selected.
     ASSERT_FILE(SUCCEEDED(pReader->lpVtbl->SetStreamSelection(pReader, (DWORD)MF_SOURCE_READER_FIRST_AUDIO_STREAM, TRUE)));
-
-    UINT32 v;
-    pUncompressedAudioType->lpVtbl->GetUINT32(pUncompressedAudioType, &MF_MT_AUDIO_SAMPLES_PER_SECOND, &v);
-    printf("uncompressed sample rate: %d\n",v);
-    pUncompressedAudioType->lpVtbl->GetUINT32(pUncompressedAudioType, &MF_MT_AUDIO_BITS_PER_SAMPLE, &v);
-    printf("bits per sample: %d\n",v);
-    pUncompressedAudioType->lpVtbl->GetUINT32(pUncompressedAudioType, &MF_MT_AUDIO_NUM_CHANNELS, &v);
-    printf("num channels: %d\n",v);
 
     int nSamples = 0;
     DWORD cbAudioData = 0;
@@ -186,7 +177,6 @@ int16_t *load_audio(int *nFrames, char *format, ...){
     BYTE *outp = (BYTE *)out;
 
     *nFrames = nSamples/2;
-    printf("nFrames: %d\n",*nFrames);
 
     while (1){
         DWORD dwFlags = 0;
@@ -376,7 +366,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam){
             ASSERT(SUCCEEDED(client->lpVtbl->GetBufferSize(client, &total)));
             ASSERT(SUCCEEDED(client->lpVtbl->GetCurrentPadding(client, &padding)));
             UINT32 remaining = total - padding;
-            signed short *samples;
+            int16_t *samples;
             ASSERT(SUCCEEDED(renderClient->lpVtbl->GetBuffer(renderClient, remaining, (BYTE **)&samples)));
 
             #if USE_GL

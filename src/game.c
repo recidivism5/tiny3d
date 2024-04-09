@@ -31,13 +31,13 @@ void mousemove(int x, int y){
 	printf("mousemove: %d %d\n",x,y);
 }
 
-void update(double time, double deltaTime, int nFrames, signed short *frames){
-	for (int i = 0; i < nFrames; i++){
+void update(double time, double deltaTime, int nAudioFrames, int16_t *audioSamples){
+	for (int i = 0; i < nAudioFrames; i++){
 		if (curFrame >= doodooFrames){
 			curFrame = 0;
 		}
-		frames[i*2] = doodoo[curFrame*2];
-		frames[i*2+1] = doodoo[curFrame*2+1];
+		audioSamples[i*2] = doodoo[curFrame*2];
+		audioSamples[i*2+1] = doodoo[curFrame*2+1];
 		curFrame++;
 	}
 	clear_screen(0xff00ff00);
@@ -45,6 +45,6 @@ void update(double time, double deltaTime, int nFrames, signed short *frames){
 
 int main(int argc, char **argv){
 	puts(local_path_to_absolute("joj.png"));
-	doodoo = load_audio(&doodooFrames, "just.mp3");
+	doodoo = load_audio(&doodooFrames, "ohshit.mp3");
     open_window(3);
 }

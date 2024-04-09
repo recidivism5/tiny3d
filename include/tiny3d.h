@@ -27,14 +27,14 @@
 	#endif
 	void open_window(int width, int height); //width = 0: fullscreen
 	//define this:
-	extern void update(double time, double deltaTime, int width, int height, int nFrames, signed short *frames);
+	extern void update(double time, double deltaTime, int width, int height, int nAudioFrames, int16_t *audioSamples);
 #else
 	#define SCREEN_WIDTH 256
 	#define SCREEN_HEIGHT 192
 	extern uint32_t screen[SCREEN_WIDTH*SCREEN_HEIGHT];
 	void open_window(int scale); //scale = 0: fullscreen
 	//define this:
-	extern void update(double time, double deltaTime, int nFrames, signed short *frames);
+	extern void update(double time, double deltaTime, int nAudioFrames, int16_t *audioSamples);
 
 	//drawing functions:
 	void clear_screen(uint32_t color);
