@@ -17,7 +17,7 @@
 #define TINY3D_SAMPLE_RATE 44100
 #define TINY3D_AUDIO_BUFSZ 8192
 
-#define USE_GL 0
+#define USE_GL 1
 #if USE_GL
 	#if __APPLE__
 		#include <OpenGL/OpenGL.h>

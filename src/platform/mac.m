@@ -6,10 +6,11 @@
 #import <CoreVideo/CVDisplayLink.h>
 
 #include <AudioToolbox/AudioQueue.h>
+#include <AudioToolbox/ExtendedAudioFile.h>
 struct fenster_audio {
 	AudioQueueRef queue;
 	size_t pos;
-	signed short buf[TINY3D_AUDIO_BUFSZ*2];
+	int16_t buf[TINY3D_AUDIO_BUFSZ*2];
 	dispatch_semaphore_t drained;
 	dispatch_semaphore_t full;
 } audioState;
@@ -59,6 +60,112 @@ uint64_t get_time(void){
 	struct timespec ts;
 	clock_gettime(CLOCK_MONOTONIC, &ts);
 	return (uint64_t) ts.tv_sec * 1000000000 + (uint64_t) ts.tv_nsec;
+}
+
+uint32_t *load_image(bool flip_vertically, int *width, int *height, char *format, ...){
+	va_list args;
+    va_start(args,format);
+    assertPath = local_path_to_absolute_vararg(format,args);
+
+	NSImage* img = [[NSImage alloc] initWithContentsOfFile:[NSString stringWithUTF8String:assertPath]];
+	ASSERT_FILE(img);
+	*width = (int)[img size].width;
+	*height = (int)[img size].height;
+	uint32_t *pixels = malloc((*width)*(*height)*sizeof(*pixels));
+	ASSERT_FILE(pixels);
+
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceGenericRGB);
+    CGContextRef ctx = CGBitmapContextCreate(
+		pixels,
+		*width,
+		*height,
+		8,
+		(*width)*sizeof(*pixels),
+		colorSpace,
+		kCGImageAlphaPremultipliedLast
+	);
+    NSGraphicsContext* gctx = [NSGraphicsContext graphicsContextWithCGContext:ctx flipped:!flip_vertically];
+    [NSGraphicsContext setCurrentContext:gctx];
+    [img drawInRect:NSMakeRect(0, 0, *width, *height)];
+    [NSGraphicsContext setCurrentContext:nil];
+    CGContextRelease(ctx);
+    CGColorSpaceRelease(colorSpace);
+
+	va_end(args);
+
+	return pixels;
+}
+int16_t *load_audio(int *nFrames, char *format, ...){
+	va_list args;
+    va_start(args,format);
+    assertPath = local_path_to_absolute_vararg(format,args);
+
+    ExtAudioFileRef af = NULL;
+    OSStatus err = ExtAudioFileOpenURL((__bridge CFURLRef)[NSURL URLWithString:[NSString stringWithUTF8String:assertPath]], &af);
+    if(err != noErr){
+		fatal_error("joj");
+	}
+	AudioStreamBasicDescription fmt = {0};
+	fmt.mSampleRate = TINY3D_SAMPLE_RATE;
+    fmt.mFormatID = kAudioFormatLinearPCM;
+    fmt.mFormatFlags = kLinearPCMFormatFlagIsSignedInteger;
+    fmt.mBytesPerFrame = (16 * 2) / 8;
+    fmt.mFramesPerPacket = 1;
+    fmt.mBytesPerPacket = fmt.mFramesPerPacket * fmt.mBytesPerFrame;
+    fmt.mChannelsPerFrame = 2;
+    fmt.mBitsPerChannel = 16;
+    fmt.mReserved = 0;
+	err = ExtAudioFileSetProperty(af, kExtAudioFileProperty_ClientDataFormat, sizeof(fmt), &fmt);
+    if(err != noErr){
+		fatal_error("joj");
+	}
+	int bufferFrames = 4096;
+    int16_t data[bufferFrames*2];
+	AudioBuffer buffer = {
+        .mNumberChannels = 2,
+        .mDataByteSize = sizeof(data),
+        .mData = data
+    };
+    AudioBufferList bufferList;
+    bufferList.mNumberBuffers = 1;
+    bufferList.mBuffers[0] = buffer;
+	*nFrames = 0;
+	while (1){
+		UInt32 ioFrames = bufferFrames; /* Request reading 4096 frames. */
+		err = ExtAudioFileRead(af, &ioFrames, &bufferList);
+		if(err != noErr){
+			fatal_error("joj");
+		}
+		if (!ioFrames){
+			break;
+		}
+		*nFrames += ioFrames;
+	}
+	ExtAudioFileSeek(af, 0);
+	int16_t *frames = malloc((*nFrames)*2*sizeof(*frames));
+	ASSERT_FILE(frames);
+	buffer.mDataByteSize = (*nFrames)*2*sizeof(*frames);
+	buffer.mData = frames;
+	bufferList.mBuffers[0] = buffer; //have to do this again because this is probably a multi-value copy operation. Aren't high level langs great? /s
+	{
+		UInt32 ioFrames = *nFrames;
+		err = ExtAudioFileRead(af, &ioFrames, &bufferList);
+		if(err != noErr){
+			fatal_error("joj");
+		}
+	}
+	if(af)
+    {
+        err = ExtAudioFileDispose(af);
+        if(err != noErr){
+			fatal_error("joj");
+		}
+            // How do you handle an error from a dispose function?
+    }
+
+	va_end(args);
+
+	return frames;
 }
 
 #if defined(MAC_OS_X_VERSION_10_12) && MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_12
