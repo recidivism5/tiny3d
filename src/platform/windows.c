@@ -461,7 +461,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam){
     return DefWindowProcW(hwnd, msg, wparam, lparam);
 }
 
+#if USE_GL
+void open_window(int width, int height){
+    int scale = 1;
+    int SCREEN_WIDTH = width;
+    int SCREEN_HEIGHT = height;
+#else
 void open_window(int scale){
+#endif
     WNDCLASSEXW wcex = {
         .cbSize = sizeof(wcex),
         .style = CS_HREDRAW | CS_VREDRAW,

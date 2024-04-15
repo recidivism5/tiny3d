@@ -49,7 +49,7 @@ elseif(APPLE)
     )
 elseif(UNIX)
 	target_sources(${PROJECT_NAME} PRIVATE src/platform/unix.c)
-	target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} m X11)
+	target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} m X11 pulse pulse-simple)
 endif()
 
 #https://stackoverflow.com/questions/7747857/in-cmake-how-do-i-work-around-the-debug-and-release-directories-visual-studio-2

@@ -1,3 +1,5 @@
+#include <tiny3d.h>
+
 #include <X11/X.h>
 #include <X11/Xlib.h>
 
@@ -335,12 +337,26 @@ uint64_t get_time(void){
     return (uint64_t) ts.tv_sec * 1000000000 + (uint64_t) ts.tv_nsec;
 }
 
-void open_window(int width, int height, int fbWidth, int fbHeight, uint32_t *framebuffer){
+bool is_mouse_locked(void){}
+void lock_mouse(bool locked){}
+uint32_t *load_image(bool flip_vertically, int *width, int *height, char *format, ...){}
+int16_t *load_audio(int *nFrames, char *format, ...){}
+
+#include <pulse/error.h>
+#include <pulse/simple.h>
+
+#if USE_GL
+void open_window(int width, int height){
+#else
+void open_window(int scale){
+	int width = SCREEN_WIDTH * scale;
+	int height = SCREEN_HEIGHT * scale;
+#endif
     Display *display = XOpenDisplay(NULL);
-    int screen = DefaultScreen(display);
-    int swidth = XDisplayWidth(display,screen);
-    int sheight = XDisplayHeight(display,screen);
-    Window window = XCreateSimpleWindow(display, RootWindow(display, screen), 0, 0, width, height, 0, 0, 0);
+    int scr = DefaultScreen(display);
+    int swidth = XDisplayWidth(display,scr);
+    int sheight = XDisplayHeight(display,scr);
+    Window window = XCreateSimpleWindow(display, RootWindow(display, scr), 0, 0, width, height, 0, 0, 0);
     XStoreName(display, window, "tiny3d");
     XSelectInput(display, window, KeyPressMask | KeyReleaseMask);
     int visual_hints[] = {
@@ -349,7 +365,7 @@ void open_window(int width, int height, int fbWidth, int fbHeight, uint32_t *fra
         GLX_DOUBLEBUFFER,
         None
     };
-    XVisualInfo *visual_info = glXChooseVisual(display, screen, visual_hints);
+    XVisualInfo *visual_info = glXChooseVisual(display, scr, visual_hints);
     GLXContext context = glXCreateContext(display, visual_info, NULL, True);
     glXMakeCurrent(display, window, context);
     typedef void (*PFNGLXSWAPINTERVALEXTPROC)(Display *, GLXDrawable, int);
@@ -366,9 +382,24 @@ void open_window(int width, int height, int fbWidth, int fbHeight, uint32_t *fra
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-    uint64_t tstart, t0, t1;
-    tstart = get_time();
-    t0 = tstart;
+    static int16_t audioBuf[TINY3D_AUDIO_BUFSZ*2];
+    pa_sample_spec spec = {
+        .format = PA_SAMPLE_S16NE,
+        .channels = 2,
+        .rate = TINY3D_SAMPLE_RATE
+    };
+    pa_simple *stream = pa_simple_new(
+        NULL,               // Use the default server.
+        "tiny3d",           // Our application's name.
+        PA_STREAM_PLAYBACK,
+        NULL,               // Use the default device.
+        "Game",            // Description of our stream.
+        &spec,                // Our sample format.
+        NULL,               // Use default channel map
+        NULL,               // Use default buffering attributes.
+        NULL               // Ignore error code.
+    );
+    ASSERT(stream);
     
     for(;;)
     {
@@ -385,34 +416,66 @@ void open_window(int width, int height, int fbWidth, int fbHeight, uint32_t *fra
             }
         }
 
-        t1 = get_time();
-        update((double)(t1-tstart) / 1000000000.0, (double)(t1-t0) / 1000000000.0);
-        t0 = t1;
-
         XWindowAttributes attribs;
         XGetWindowAttributes(display, window, &attribs);
+        width = attribs.width;
+        height = attribs.height;
 
-        glClearColor(0.0f,0.0f,1.0f,1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, fbWidth, fbHeight, 0, GL_BGRA, GL_UNSIGNED_BYTE, framebuffer);
-        int scale = 1;
-        while (fbWidth*scale <= attribs.width && fbHeight*scale <= attribs.height){
-            scale++;
+        static uint64_t tstart, t0, t1;
+        static int timeSet = 0;
+        if (!timeSet){
+            tstart = get_time();
+            t0 = tstart;
+            timeSet = 1;
         }
-        scale--;
-        int scaledWidth = scale * fbWidth;
-        int scaledHeight = scale * fbHeight;
-        int x = attribs.width/2-scaledWidth/2;
-        int y = attribs.height/2-scaledHeight/2;
-        glViewport(x,y,scaledWidth,scaledHeight);
-        glEnable(GL_TEXTURE_2D);
-        glBegin(GL_QUADS);
-        glTexCoord2f(0,0); glVertex2f(-1,-1);
-        glTexCoord2f(1,0); glVertex2f(1,-1);
-        glTexCoord2f(1,1); glVertex2f(1,1);
-        glTexCoord2f(0,1); glVertex2f(-1,1);
-        glEnd();
+
+        t1 = get_time();
+
+        double dt = (double)(t1-t0) / 1000000000.0;
+        int nFrames = MIN(TINY3D_AUDIO_BUFSZ,(int)(dt * TINY3D_SAMPLE_RATE));
+        //printf("nFrames: %d\n",nFrames);
+        #if USE_GL
+            update((double)(t1-tstart) / 1000000000.0, dt, width, height, nFrames, audioBuf);
+        #else
+            update((double)(t1-tstart) / 1000000000.0, dt, nFrames, audioBuf);
+
+            glViewport(0,0,width,height);
+
+            glClearColor(0.0f,0.0f,1.0f,1.0f);
+            glClear(GL_COLOR_BUFFER_BIT);
+
+            static GLuint texture = 0;
+            if (!texture){
+                glGenTextures(1,&texture);
+                glBindTexture(GL_TEXTURE_2D,texture);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            }
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCREEN_WIDTH, SCREEN_HEIGHT, 0, GL_BGRA, GL_UNSIGNED_BYTE, screen);
+            int scale = 1;
+            while (SCREEN_WIDTH*scale <= width && SCREEN_HEIGHT*scale <= height){
+                scale++;
+            }
+            scale--;
+            int scaledWidth = scale * SCREEN_WIDTH;
+            int scaledHeight = scale * SCREEN_HEIGHT;
+            int x = width/2-scaledWidth/2;
+            int y = height/2-scaledHeight/2;
+            glViewport(x,y,scaledWidth,scaledHeight);
+            glEnable(GL_TEXTURE_2D);
+            glBegin(GL_QUADS);
+            glTexCoord2f(0,0); glVertex2f(-1,-1);
+            glTexCoord2f(1,0); glVertex2f(1,-1);
+            glTexCoord2f(1,1); glVertex2f(1,1);
+            glTexCoord2f(0,1); glVertex2f(-1,1);
+            glEnd();
+        #endif
+
+        if (nFrames){
+            pa_simple_write(stream, audioBuf, nFrames*2*sizeof(*audioBuf), NULL);
+        }
+        
+        t0 = t1;
 
         glXSwapBuffers(display, window);
     }

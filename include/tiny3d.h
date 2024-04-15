@@ -9,6 +9,7 @@
 #include <time.h>
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <limits.h>
 
 #include <debugbreak.h>
 #include <whereami.h>
@@ -23,6 +24,13 @@
 		#include <OpenGL/OpenGL.h>
 		#include <OpenGL/gl.h>
 	#else
+		#if _WIN32
+			#define WIN32_LEAN_AND_MEAN
+			#define NOMINMAX
+			#define UNICODE
+			#define COBJMACROS
+			#include <windows.h>//must include before gl.h
+		#endif
 		#include <GL/gl.h>
 	#endif
 	void open_window(int width, int height); //width = 0: fullscreen

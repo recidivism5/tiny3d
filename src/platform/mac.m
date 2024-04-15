@@ -226,11 +226,11 @@ void lock_mouse(bool locked){
 
 	t1 = get_time();
 
-	int nSamples = fenster_audio_available(&audioState);
+	int nFrames = fenster_audio_available(&audioState);
 	#if USE_GL
-		update((double)(t1-tstart) / 1000000000.0, (double)(t1-t0) / 1000000000.0, width, height, nSamples, audioState.buf+audioState.pos);
+		update((double)(t1-tstart) / 1000000000.0, (double)(t1-t0) / 1000000000.0, width, height, nFrames, audioState.buf+audioState.pos*2);
 	#else
-		update((double)(t1-tstart) / 1000000000.0, (double)(t1-t0) / 1000000000.0, nSamples, audioState.buf+audioState.pos);
+		update((double)(t1-tstart) / 1000000000.0, (double)(t1-t0) / 1000000000.0, nFrames, audioState.buf+audioState.pos*2);
 
 		glViewport(0,0,width,height);
 

@@ -23,13 +23,16 @@ void mousemove(int x, int y){
 }
 
 void update(double time, double deltaTime, int width, int height, int nAudioFrames, int16_t *audioSamples){
+	static int counter = 0;
+	static bool high = false;
 	for (int i = 0; i < nAudioFrames; i++){
-		if (curFrame >= doodooFrames){
-			curFrame = 0;
+		if (counter == 300){
+			counter = 0;
+			high = !high;
 		}
-		audioSamples[i*2] = doodoo[curFrame*2];
-		audioSamples[i*2+1] = doodoo[curFrame*2+1];
-		curFrame++;
+		audioSamples[i*2] = (SHRT_MAX-1) * (high ? 1 : -1);
+		audioSamples[i*2+1] = audioSamples[i*2];
+		counter++;
 	}
 
 	glViewport(0,0,width,height);
@@ -37,7 +40,7 @@ void update(double time, double deltaTime, int width, int height, int nAudioFram
 	glClearColor(1,0,0,1);
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	if (!tid){
+	/*if (!tid){
 		int w,h;
 		uint32_t *p = load_image(false,&w,&h,"test.jpg");
 		glGenTextures(1,&tid);
@@ -55,10 +58,10 @@ void update(double time, double deltaTime, int width, int height, int nAudioFram
 	glTexCoord2f(1,1); glVertex2f(1,1);
 	glTexCoord2f(0,1); glVertex2f(-1,1);
 	glEnd();
-	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_TEXTURE_2D);*/
 }
 
 int main(int argc, char **argv){
-	doodoo = load_audio(&doodooFrames, "ohshit.mp3");
+	//doodoo = load_audio(&doodooFrames, "ohshit.mp3");
     open_window(640,480);
 }
