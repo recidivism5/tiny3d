@@ -1,0 +1,3 @@
+/Users/margaretbryant/Documents/coding/trimesh/build/CMakeFiles/rebuild_cache.dir
+/Users/margaretbryant/Documents/coding/trimesh/build/CMakeFiles/edit_cache.dir
+/Users/margaretbryant/Documents/coding/trimesh/build/CMakeFiles/tiny3d.dir

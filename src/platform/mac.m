@@ -264,7 +264,7 @@ void lock_mouse(bool locked){
 		glEnd();
 	#endif
 
-	audioState.pos += nSamples;
+	audioState.pos += nFrames;
 	if (audioState.pos >= TINY3D_AUDIO_BUFSZ){
 		audioState.pos = 0;
 		dispatch_semaphore_signal(audioState.full);
