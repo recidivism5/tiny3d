@@ -3,7 +3,8 @@ project(tiny3d C)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include_directories(include)
-add_executable(${PROJECT_NAME} src/tiny3d.c src/game.c src/tinymath.c src/whereami.c ${PLATFORM_SRC})
+file(GLOB SRC CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c" "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h")
+add_executable(${PROJECT_NAME} ${SRC})
 if(MSVC)
 	set_target_properties(
 		${PROJECT_NAME}

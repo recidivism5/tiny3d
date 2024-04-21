@@ -39,29 +39,8 @@ void update(double time, double deltaTime, int width, int height, int nAudioFram
 
 	glClearColor(1,0,0,1);
 	glClear(GL_COLOR_BUFFER_BIT);
-
-	/*if (!tid){
-		int w,h;
-		uint32_t *p = load_image(false,&w,&h,"test.jpg");
-		glGenTextures(1,&tid);
-		glBindTexture(GL_TEXTURE_2D,tid);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,w,h,0,GL_RGBA,GL_UNSIGNED_BYTE,p);
-	}
-
-	glBindTexture(GL_TEXTURE_2D,tid);
-	glEnable(GL_TEXTURE_2D);
-	glBegin(GL_QUADS);
-	glTexCoord2f(0,0); glVertex2f(-1,-1);
-	glTexCoord2f(1,0); glVertex2f(1,-1);
-	glTexCoord2f(1,1); glVertex2f(1,1);
-	glTexCoord2f(0,1); glVertex2f(-1,1);
-	glEnd();
-	glDisable(GL_TEXTURE_2D);*/
 }
 
 int main(int argc, char **argv){
-	//doodoo = load_audio(&doodooFrames, "ohshit.mp3");
     open_window(640,480);
 }

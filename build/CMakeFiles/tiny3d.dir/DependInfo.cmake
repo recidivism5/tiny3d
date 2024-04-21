@@ -4,6 +4,7 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_C
+  "/Users/margaretbryant/Documents/coding/trimesh/src/fast_obj.c" "/Users/margaretbryant/Documents/coding/trimesh/build/CMakeFiles/tiny3d.dir/src/fast_obj.c.o"
   "/Users/margaretbryant/Documents/coding/trimesh/src/game.c" "/Users/margaretbryant/Documents/coding/trimesh/build/CMakeFiles/tiny3d.dir/src/game.c.o"
   "/Users/margaretbryant/Documents/coding/trimesh/src/platform/mac.m" "/Users/margaretbryant/Documents/coding/trimesh/build/CMakeFiles/tiny3d.dir/src/platform/mac.m.o"
   "/Users/margaretbryant/Documents/coding/trimesh/src/tiny3d.c" "/Users/margaretbryant/Documents/coding/trimesh/build/CMakeFiles/tiny3d.dir/src/tiny3d.c.o"

@@ -1,13 +1,18 @@
 [
 {
   "directory": "/Users/margaretbryant/Documents/coding/trimesh/build",
-  "command": "/usr/bin/clang  -I/Users/margaretbryant/Documents/coding/trimesh/include  -g   -o CMakeFiles/tiny3d.dir/src/tiny3d.c.o   -c /Users/margaretbryant/Documents/coding/trimesh/src/tiny3d.c",
-  "file": "/Users/margaretbryant/Documents/coding/trimesh/src/tiny3d.c"
+  "command": "/usr/bin/clang  -I/Users/margaretbryant/Documents/coding/trimesh/include  -g   -o CMakeFiles/tiny3d.dir/src/fast_obj.c.o   -c /Users/margaretbryant/Documents/coding/trimesh/src/fast_obj.c",
+  "file": "/Users/margaretbryant/Documents/coding/trimesh/src/fast_obj.c"
 },
 {
   "directory": "/Users/margaretbryant/Documents/coding/trimesh/build",
   "command": "/usr/bin/clang  -I/Users/margaretbryant/Documents/coding/trimesh/include  -g   -o CMakeFiles/tiny3d.dir/src/game.c.o   -c /Users/margaretbryant/Documents/coding/trimesh/src/game.c",
   "file": "/Users/margaretbryant/Documents/coding/trimesh/src/game.c"
+},
+{
+  "directory": "/Users/margaretbryant/Documents/coding/trimesh/build",
+  "command": "/usr/bin/clang  -I/Users/margaretbryant/Documents/coding/trimesh/include  -g   -o CMakeFiles/tiny3d.dir/src/tiny3d.c.o   -c /Users/margaretbryant/Documents/coding/trimesh/src/tiny3d.c",
+  "file": "/Users/margaretbryant/Documents/coding/trimesh/src/tiny3d.c"
 },
 {
   "directory": "/Users/margaretbryant/Documents/coding/trimesh/build",

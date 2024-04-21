@@ -107,6 +107,7 @@ preinstall/fast:
 
 # clear depends
 depend:
+	$(CMAKE_COMMAND) -P /Users/margaretbryant/Documents/coding/trimesh/build/CMakeFiles/VerifyGlobs.cmake
 	$(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
@@ -122,6 +123,33 @@ tiny3d: cmake_check_build_system
 tiny3d/fast:
 	$(MAKE) -f CMakeFiles/tiny3d.dir/build.make CMakeFiles/tiny3d.dir/build
 .PHONY : tiny3d/fast
+
+src/fast_obj.o: src/fast_obj.c.o
+
+.PHONY : src/fast_obj.o
+
+# target to build an object file
+src/fast_obj.c.o:
+	$(MAKE) -f CMakeFiles/tiny3d.dir/build.make CMakeFiles/tiny3d.dir/src/fast_obj.c.o
+.PHONY : src/fast_obj.c.o
+
+src/fast_obj.i: src/fast_obj.c.i
+
+.PHONY : src/fast_obj.i
+
+# target to preprocess a source file
+src/fast_obj.c.i:
+	$(MAKE) -f CMakeFiles/tiny3d.dir/build.make CMakeFiles/tiny3d.dir/src/fast_obj.c.i
+.PHONY : src/fast_obj.c.i
+
+src/fast_obj.s: src/fast_obj.c.s
+
+.PHONY : src/fast_obj.s
+
+# target to generate assembly for a file
+src/fast_obj.c.s:
+	$(MAKE) -f CMakeFiles/tiny3d.dir/build.make CMakeFiles/tiny3d.dir/src/fast_obj.c.s
+.PHONY : src/fast_obj.c.s
 
 src/game.o: src/game.c.o
 
@@ -267,6 +295,9 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
 	@echo "... tiny3d"
+	@echo "... src/fast_obj.o"
+	@echo "... src/fast_obj.i"
+	@echo "... src/fast_obj.s"
 	@echo "... src/game.o"
 	@echo "... src/game.i"
 	@echo "... src/game.s"
@@ -293,6 +324,7 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
+	$(CMAKE_COMMAND) -P /Users/margaretbryant/Documents/coding/trimesh/build/CMakeFiles/VerifyGlobs.cmake
 	$(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 

@@ -65,18 +65,18 @@ tiny3d.app/Contents/Resources/app.icns: ../app.icns
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Copying OS X content tiny3d.app/Contents/Resources/app.icns"
 	$(CMAKE_COMMAND) -E copy /Users/margaretbryant/Documents/coding/trimesh/app.icns tiny3d.app/Contents/Resources/app.icns
 
-CMakeFiles/tiny3d.dir/src/tiny3d.c.o: CMakeFiles/tiny3d.dir/flags.make
-CMakeFiles/tiny3d.dir/src/tiny3d.c.o: ../src/tiny3d.c
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/margaretbryant/Documents/coding/trimesh/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building C object CMakeFiles/tiny3d.dir/src/tiny3d.c.o"
-	/usr/bin/clang $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/tiny3d.dir/src/tiny3d.c.o   -c /Users/margaretbryant/Documents/coding/trimesh/src/tiny3d.c
+CMakeFiles/tiny3d.dir/src/fast_obj.c.o: CMakeFiles/tiny3d.dir/flags.make
+CMakeFiles/tiny3d.dir/src/fast_obj.c.o: ../src/fast_obj.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/margaretbryant/Documents/coding/trimesh/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building C object CMakeFiles/tiny3d.dir/src/fast_obj.c.o"
+	/usr/bin/clang $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/tiny3d.dir/src/fast_obj.c.o   -c /Users/margaretbryant/Documents/coding/trimesh/src/fast_obj.c
 
-CMakeFiles/tiny3d.dir/src/tiny3d.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/tiny3d.dir/src/tiny3d.c.i"
-	/usr/bin/clang $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /Users/margaretbryant/Documents/coding/trimesh/src/tiny3d.c > CMakeFiles/tiny3d.dir/src/tiny3d.c.i
+CMakeFiles/tiny3d.dir/src/fast_obj.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/tiny3d.dir/src/fast_obj.c.i"
+	/usr/bin/clang $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /Users/margaretbryant/Documents/coding/trimesh/src/fast_obj.c > CMakeFiles/tiny3d.dir/src/fast_obj.c.i
 
-CMakeFiles/tiny3d.dir/src/tiny3d.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/tiny3d.dir/src/tiny3d.c.s"
-	/usr/bin/clang $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /Users/margaretbryant/Documents/coding/trimesh/src/tiny3d.c -o CMakeFiles/tiny3d.dir/src/tiny3d.c.s
+CMakeFiles/tiny3d.dir/src/fast_obj.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/tiny3d.dir/src/fast_obj.c.s"
+	/usr/bin/clang $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /Users/margaretbryant/Documents/coding/trimesh/src/fast_obj.c -o CMakeFiles/tiny3d.dir/src/fast_obj.c.s
 
 CMakeFiles/tiny3d.dir/src/game.c.o: CMakeFiles/tiny3d.dir/flags.make
 CMakeFiles/tiny3d.dir/src/game.c.o: ../src/game.c
@@ -91,9 +91,22 @@ CMakeFiles/tiny3d.dir/src/game.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/tiny3d.dir/src/game.c.s"
 	/usr/bin/clang $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /Users/margaretbryant/Documents/coding/trimesh/src/game.c -o CMakeFiles/tiny3d.dir/src/game.c.s
 
+CMakeFiles/tiny3d.dir/src/tiny3d.c.o: CMakeFiles/tiny3d.dir/flags.make
+CMakeFiles/tiny3d.dir/src/tiny3d.c.o: ../src/tiny3d.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/margaretbryant/Documents/coding/trimesh/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building C object CMakeFiles/tiny3d.dir/src/tiny3d.c.o"
+	/usr/bin/clang $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/tiny3d.dir/src/tiny3d.c.o   -c /Users/margaretbryant/Documents/coding/trimesh/src/tiny3d.c
+
+CMakeFiles/tiny3d.dir/src/tiny3d.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/tiny3d.dir/src/tiny3d.c.i"
+	/usr/bin/clang $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /Users/margaretbryant/Documents/coding/trimesh/src/tiny3d.c > CMakeFiles/tiny3d.dir/src/tiny3d.c.i
+
+CMakeFiles/tiny3d.dir/src/tiny3d.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/tiny3d.dir/src/tiny3d.c.s"
+	/usr/bin/clang $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /Users/margaretbryant/Documents/coding/trimesh/src/tiny3d.c -o CMakeFiles/tiny3d.dir/src/tiny3d.c.s
+
 CMakeFiles/tiny3d.dir/src/tinymath.c.o: CMakeFiles/tiny3d.dir/flags.make
 CMakeFiles/tiny3d.dir/src/tinymath.c.o: ../src/tinymath.c
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/margaretbryant/Documents/coding/trimesh/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building C object CMakeFiles/tiny3d.dir/src/tinymath.c.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/margaretbryant/Documents/coding/trimesh/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building C object CMakeFiles/tiny3d.dir/src/tinymath.c.o"
 	/usr/bin/clang $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/tiny3d.dir/src/tinymath.c.o   -c /Users/margaretbryant/Documents/coding/trimesh/src/tinymath.c
 
 CMakeFiles/tiny3d.dir/src/tinymath.c.i: cmake_force
@@ -106,7 +119,7 @@ CMakeFiles/tiny3d.dir/src/tinymath.c.s: cmake_force
 
 CMakeFiles/tiny3d.dir/src/whereami.c.o: CMakeFiles/tiny3d.dir/flags.make
 CMakeFiles/tiny3d.dir/src/whereami.c.o: ../src/whereami.c
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/margaretbryant/Documents/coding/trimesh/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building C object CMakeFiles/tiny3d.dir/src/whereami.c.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/margaretbryant/Documents/coding/trimesh/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building C object CMakeFiles/tiny3d.dir/src/whereami.c.o"
 	/usr/bin/clang $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/tiny3d.dir/src/whereami.c.o   -c /Users/margaretbryant/Documents/coding/trimesh/src/whereami.c
 
 CMakeFiles/tiny3d.dir/src/whereami.c.i: cmake_force
@@ -119,7 +132,7 @@ CMakeFiles/tiny3d.dir/src/whereami.c.s: cmake_force
 
 CMakeFiles/tiny3d.dir/src/platform/mac.m.o: CMakeFiles/tiny3d.dir/flags.make
 CMakeFiles/tiny3d.dir/src/platform/mac.m.o: ../src/platform/mac.m
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/margaretbryant/Documents/coding/trimesh/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building C object CMakeFiles/tiny3d.dir/src/platform/mac.m.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/Users/margaretbryant/Documents/coding/trimesh/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building C object CMakeFiles/tiny3d.dir/src/platform/mac.m.o"
 	/usr/bin/clang $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/tiny3d.dir/src/platform/mac.m.o   -c /Users/margaretbryant/Documents/coding/trimesh/src/platform/mac.m
 
 CMakeFiles/tiny3d.dir/src/platform/mac.m.i: cmake_force
@@ -132,8 +145,9 @@ CMakeFiles/tiny3d.dir/src/platform/mac.m.s: cmake_force
 
 # Object files for target tiny3d
 tiny3d_OBJECTS = \
-"CMakeFiles/tiny3d.dir/src/tiny3d.c.o" \
+"CMakeFiles/tiny3d.dir/src/fast_obj.c.o" \
 "CMakeFiles/tiny3d.dir/src/game.c.o" \
+"CMakeFiles/tiny3d.dir/src/tiny3d.c.o" \
 "CMakeFiles/tiny3d.dir/src/tinymath.c.o" \
 "CMakeFiles/tiny3d.dir/src/whereami.c.o" \
 "CMakeFiles/tiny3d.dir/src/platform/mac.m.o"
@@ -141,14 +155,15 @@ tiny3d_OBJECTS = \
 # External object files for target tiny3d
 tiny3d_EXTERNAL_OBJECTS =
 
-tiny3d.app/Contents/MacOS/tiny3d: CMakeFiles/tiny3d.dir/src/tiny3d.c.o
+tiny3d.app/Contents/MacOS/tiny3d: CMakeFiles/tiny3d.dir/src/fast_obj.c.o
 tiny3d.app/Contents/MacOS/tiny3d: CMakeFiles/tiny3d.dir/src/game.c.o
+tiny3d.app/Contents/MacOS/tiny3d: CMakeFiles/tiny3d.dir/src/tiny3d.c.o
 tiny3d.app/Contents/MacOS/tiny3d: CMakeFiles/tiny3d.dir/src/tinymath.c.o
 tiny3d.app/Contents/MacOS/tiny3d: CMakeFiles/tiny3d.dir/src/whereami.c.o
 tiny3d.app/Contents/MacOS/tiny3d: CMakeFiles/tiny3d.dir/src/platform/mac.m.o
 tiny3d.app/Contents/MacOS/tiny3d: CMakeFiles/tiny3d.dir/build.make
 tiny3d.app/Contents/MacOS/tiny3d: CMakeFiles/tiny3d.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/Users/margaretbryant/Documents/coding/trimesh/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Linking C executable tiny3d.app/Contents/MacOS/tiny3d"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/Users/margaretbryant/Documents/coding/trimesh/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Linking C executable tiny3d.app/Contents/MacOS/tiny3d"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/tiny3d.dir/link.txt --verbose=$(VERBOSE)
 	plutil -replace NSHighResolutionCapable -bool true /Users/margaretbryant/Documents/coding/trimesh/tiny3d.app/Contents/Info.plist
 

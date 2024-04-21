@@ -1,8 +1,9 @@
 file(REMOVE_RECURSE
   "../app.icns"
   "tiny3d.app/Contents/Resources/app.icns"
-  "CMakeFiles/tiny3d.dir/src/tiny3d.c.o"
+  "CMakeFiles/tiny3d.dir/src/fast_obj.c.o"
   "CMakeFiles/tiny3d.dir/src/game.c.o"
+  "CMakeFiles/tiny3d.dir/src/tiny3d.c.o"
   "CMakeFiles/tiny3d.dir/src/tinymath.c.o"
   "CMakeFiles/tiny3d.dir/src/whereami.c.o"
   "CMakeFiles/tiny3d.dir/src/platform/mac.m.o"
