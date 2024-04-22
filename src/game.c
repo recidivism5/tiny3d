@@ -1,9 +1,7 @@
-#include "tiny3d.h"
+#include <tiny3d.h>
+#include <fast_obj.h>
 
-GLuint tid;
-int16_t *doodoo;
-int doodooFrames;
-int curFrame = 0;
+fastObjMesh *mesh;
 
 void keydown(int key){
 	printf("keydown: %d\n",key);
@@ -23,24 +21,37 @@ void mousemove(int x, int y){
 }
 
 void update(double time, double deltaTime, int width, int height, int nAudioFrames, int16_t *audioSamples){
-	static int counter = 0;
-	static bool high = false;
-	for (int i = 0; i < nAudioFrames; i++){
-		if (counter == 300){
-			counter = 0;
-			high = !high;
-		}
-		audioSamples[i*2] = (SHRT_MAX-1) * (high ? 1 : -1);
-		audioSamples[i*2+1] = audioSamples[i*2];
-		counter++;
-	}
-
 	glViewport(0,0,width,height);
 
-	glClearColor(1,0,0,1);
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClearColor(0,0,0,1);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluPerspective(90.0,(double)width/height,0.01,1000.0);
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glTranslated(0,-4,-10);
+	glRotated(20*time,0,1,0);
+
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+	GLfloat lightpos[] = {.5, 1., 1., 0.};
+	glLightfv(GL_LIGHT0, GL_POSITION, lightpos);
+	glColor3f(1,0,0);
+	glBegin(GL_TRIANGLES);
+	for (int v = 0; v < mesh->index_count; v++){
+		fastObjIndex *i = mesh->indices+v;
+		glNormal3fv(mesh->normals+3*i->n);
+		glVertex3fv(mesh->positions+3*i->p);
+	}
+	glEnd();
+	glDisable(GL_LIGHTING);
 }
 
 int main(int argc, char **argv){
+	mesh = fast_obj_read(local_path_to_absolute("mesh/test.obj"));
     open_window(640,480);
 }

@@ -1,2 +1,0 @@
-# Hashes of file build rules.
-f6b547099d889231f9d39452a7a9a33f ../app.icns

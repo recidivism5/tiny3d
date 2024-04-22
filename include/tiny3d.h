@@ -23,6 +23,7 @@
 	#if __APPLE__
 		#include <OpenGL/OpenGL.h>
 		#include <OpenGL/gl.h>
+		#include <OpenGL/glu.h>
 	#else
 		#if _WIN32
 			#define WIN32_LEAN_AND_MEAN

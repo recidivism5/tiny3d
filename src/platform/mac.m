@@ -221,8 +221,8 @@ void lock_mouse(bool locked){
 	}
 
 	//https://stackoverflow.com/questions/2440089/nsopenglview-resize-on-window-resize
-	int width = (int)[self bounds].size.width;
-	int height = (int)[self bounds].size.height;
+	int width = (int)[self convertRectToBacking:[self bounds]].size.width;
+	int height = (int)[self convertRectToBacking:[self bounds]].size.height;
 
 	t1 = get_time();
 
@@ -383,6 +383,7 @@ static int swidth, sheight;
    };
    NSOpenGLPixelFormat* pixelFormat = [[NSOpenGLPixelFormat alloc] initWithAttributes:attrs];
    glView = [[MyOpenGLView alloc] initWithFrame:viewRect pixelFormat:pixelFormat];
+   [glView setWantsBestResolutionOpenGLSurface:YES];//https://developer.apple.com/library/archive/documentation/GraphicsImaging/Conceptual/OpenGL-MacProgGuide/EnablingOpenGLforHighResolution/EnablingOpenGLforHighResolution.html
    [window setContentView:glView];
 
    // Show the window
