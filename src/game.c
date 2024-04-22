@@ -53,5 +53,6 @@ void update(double time, double deltaTime, int width, int height, int nAudioFram
 
 int main(int argc, char **argv){
 	mesh = fast_obj_read(local_path_to_absolute("mesh/test.obj"));
+	ASSERT(mesh);
     open_window(640,480);
 }

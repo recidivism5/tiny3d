@@ -33,6 +33,7 @@
 			#include <windows.h>//must include before gl.h
 		#endif
 		#include <GL/gl.h>
+		#include <GL/glu.h>
 	#endif
 	void open_window(int width, int height); //width = 0: fullscreen
 	//define this:
@@ -73,6 +74,7 @@ uint32_t *load_image(bool flip_vertically, int *width, int *height, char *format
 int16_t *load_audio(int *nFrames, char *format, ...);
 
 #define COUNT(arr) (sizeof(arr)/sizeof(*arr))
+#define LERP(a,b,t) ((a) + (t)*((b)-(a)))
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 #define CLAMP(a,min,max) ((a) < (min) ? (min) : (a) > (max) ? (max) : (a))
