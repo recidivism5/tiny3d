@@ -167,7 +167,7 @@ int clip(float *vin, int cin, float *vout, int axis, float val, bool less){
 
 int clip_triangle_to_mmbb(float *vin, float *vout, MMBB *m){
 	int cout;
-	static vec3 b[6];
+	static float b[6*3];
 	memcpy(vout,vin,3*3*sizeof(float));
 	cout = clip(vout,3,b,0,m->min[0],false);
 	cout = clip(b,cout,vout,0,m->max[0],true);
@@ -201,7 +201,7 @@ void update(double time, double deltaTime, int width, int height, int nAudioFram
 	glClearColor(0,0,0,1);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glMatrixMode(GL_PROJECTION);
+	/*glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluPerspective(90.0,(double)width/height,0.01,1000.0);
 
@@ -224,6 +224,7 @@ void update(double time, double deltaTime, int width, int height, int nAudioFram
 	}
 	glEnd();
 	set_material_diffuse(1,0,0);
+	player.curPos[0] = 5*sin(time);
 	MMBB m;
 	get_entity_mmbb(&player,&m);
 	draw_mmbb(&m);
@@ -235,7 +236,7 @@ void update(double time, double deltaTime, int width, int height, int nAudioFram
 		int cout = clip_triangle_to_mmbb(vout,vout,&m);
 		if (cout){
 			set_material_diffuse(0,1,0);
-			glPointSize(10);
+			glPointSize(5);
 			glBegin(GL_POINTS);
 			for (int j = 0; j < cout; j++){
 				glVertex3fv(vout+j);
@@ -243,11 +244,41 @@ void update(double time, double deltaTime, int width, int height, int nAudioFram
 			glEnd();
 		}
 	}
-	glDisable(GL_LIGHTING);
+	glDisable(GL_LIGHTING);*/
+
+	uint32_t *pix = malloc(width*height*sizeof(*pix));
+	ASSERT(pix);
+	for (int i = 0; i < width*height; i++){
+		pix[i] = 0x000000ff;
+	}
+	
+	text_set_target_image(pix,width,height);
+	text_draw(0,width,0,height,"dabchin");
+	GLuint tex;
+	glGenTextures(1,&tex);
+	glBindTexture(GL_TEXTURE_2D,tex);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,width,height,0,GL_RGBA,GL_UNSIGNED_BYTE,pix);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glEnable(GL_TEXTURE_2D);
+	glBegin(GL_QUADS);
+	glTexCoord2d(0,0); glVertex2d(-1,-1);
+	glTexCoord2d(1,0); glVertex2d(1,-1);
+	glTexCoord2d(1,1); glVertex2d(1,1);
+	glTexCoord2d(0,1); glVertex2d(-1,1);
+	glEnd();
+	glDisable(GL_TEXTURE_2D);
+	free(pix);
+	glDeleteTextures(1,&tex);
 }
 
 int main(int argc, char **argv){
 	mesh = fast_obj_read(local_path_to_absolute("mesh/test.obj"));
 	ASSERT(mesh);
+	text_set_font("Nunito-Regular.ttf");
     open_window(640,480);
 }

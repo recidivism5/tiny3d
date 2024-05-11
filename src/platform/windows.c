@@ -12,6 +12,15 @@
 #include <mfidl.h>
 #include <mfreadwrite.h>
 #include <mferror.h>
+
+#include <vssym32.h>
+#include <shellapi.h>
+#include <shlobj_core.h>
+#include <shobjidl_core.h>
+#include <shlguid.h>
+#include <commdlg.h>
+#include <shlwapi.h>
+
 #include <GL/gl.h>
 
 #include <mmdeviceapi.h>
@@ -218,6 +227,186 @@ int16_t *load_audio(int *nFrames, char *format, ...){
     va_end(args);
 
     return out;
+}
+
+typedef struct {
+	BITMAPINFOHEADER    bmiHeader;
+	RGBQUAD             bmiColors[4];
+} BITMAPINFO_TRUECOLOR32;
+
+static struct GdiImage{
+	int width, height;
+	unsigned char *pixels;
+	HDC hdcBmp;
+	HFONT fontOld;
+} gdiImg;
+/*
+static void GdiImageNew(GdiImage *img, int width, int height){
+	img->width = width;
+	img->height = height;
+	HDC hdcScreen = GetDC(0);
+	img->hdcBmp = CreateCompatibleDC(hdcScreen);
+	ReleaseDC(0,hdcScreen);
+	BITMAPINFO_TRUECOLOR32 bmi = {
+		.bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
+		.bmiHeader.biWidth = width,
+		.bmiHeader.biHeight = height,
+		.bmiHeader.biPlanes = 1,
+		.bmiHeader.biCompression = BI_RGB | BI_BITFIELDS,
+		.bmiHeader.biBitCount = 32,
+		.bmiColors[0].rgbRed = 0xff,
+		.bmiColors[1].rgbGreen = 0xff,
+		.bmiColors[2].rgbBlue = 0xff,
+	};
+    img->hbm = CreateDIBitmap(img->hdcBmp,(BITMAPINFOHEADER *)&bmi,CBM_INIT,(void *)img->pixels,(BITMAPINFO *)&bmi,DIB_RGB_COLORS);
+	//img->hbm = CreateDIBSection(img->hdcBmp,(BITMAPINFO *)&bmi,DIB_RGB_COLORS,(void **)&img->pixels,0,0);
+	ASSERT(img->hbm);
+	img->hbmOld = SelectObject(img->hdcBmp,img->hbm);
+	img->fontOld = 0;
+}
+
+static void GdiImageDestroy(GdiImage *img){
+	if (img->fontOld){
+		SelectObject(img->hdcBmp,img->fontOld);
+	}
+	SelectObject(img->hdcBmp,img->hbmOld);
+	DeleteDC(img->hdcBmp);
+	DeleteObject(img->hbm);
+	memset(img,0,sizeof(*img));
+}
+
+static void GdiImageSetFont(GdiImage *img, HFONT font){
+	HFONT old = SelectObject(img->hdcBmp,font);
+	if (!img->fontOld){
+		img->fontOld = old;
+	}
+	SetBkMode(img->hdcBmp,TRANSPARENT);
+}
+
+static void GdiImageSetFontColor(GdiImage *img, uint32_t color){
+	SetTextColor(img->hdcBmp,color & 0xffffff);
+}
+
+static void GdiImageDrawText(GdiImage *img, WCHAR *str, int x, int y){
+	ExtTextOutW(img->hdcBmp,x,y,0,0,str,(UINT)wcslen(str),0);
+}
+
+static void GdiImageTextDimensions(GdiImage *img, WCHAR *str, int *width, int *height){
+	RECT r = {0};
+	DrawTextW(img->hdcBmp,str,(UINT)wcslen(str),&r,DT_CALCRECT|DT_NOPREFIX);
+	*width = r.right-r.left;
+	*height = r.bottom-r.top;
+}
+
+static HFONT GetUserChosenFont(){
+	LOGFONTW lf;
+	CHOOSEFONTW cf = {
+		.lStructSize = sizeof(cf),
+		.lpLogFont = &lf,
+		.Flags = CF_INITTOLOGFONTSTRUCT,
+	};
+	ASSERT(ChooseFontW(&cf));
+	return CreateFontIndirectW(&lf);
+}
+
+static HFONT GetSystemUiFont(){
+	NONCLIENTMETRICSW ncm = {
+		.cbSize = sizeof(ncm)
+	};
+	SystemParametersInfoW(SPI_GETNONCLIENTMETRICS,sizeof(ncm),&ncm,0);
+	return CreateFontIndirectW(&ncm.lfCaptionFont);
+}
+*/
+static void ensure_hdcBmp(){
+    if (!gdiImg.hdcBmp){
+        HDC hdcScreen = GetDC(0);
+        gdiImg.hdcBmp = CreateCompatibleDC(hdcScreen);
+        ReleaseDC(0,hdcScreen);
+    }
+}
+void text_set_target_image(uint32_t *pixels, int width, int height){
+    gdiImg.width = width;
+    gdiImg.height = height;
+    gdiImg.pixels = pixels;
+
+    ensure_hdcBmp();
+}
+void text_set_font(char *ttfPathFormat, ...){
+    va_list args;
+	va_start(args,ttfPathFormat);
+	char *path = local_path_to_absolute_vararg(ttfPathFormat,args);
+	va_end(args);
+
+    ASSERT(1 == AddFontResourceExA(path,FR_PRIVATE,NULL));
+
+    char name[256];
+    char *start = strrchr(path,'/') ? strrchr(path,'/')+1 : strrchr(path,'\\') ? strrchr(path,'\\')+1 : path;
+    char *end = strrchr(path,'.') ? strrchr(path,'.') : start + strlen(start);
+    size_t len = end - start;
+    ASSERT(len < COUNT(name));
+    memcpy(name,start,len);
+    name[len] = 0;
+
+    puts(name);
+    
+    HFONT font = CreateFontA(-48,0,0,0,FW_DONTCARE,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,
+                CLIP_DEFAULT_PRECIS,ANTIALIASED_QUALITY, VARIABLE_PITCH,"Nunito");
+
+    ensure_hdcBmp();
+
+    HFONT old = SelectObject(gdiImg.hdcBmp,font);
+	if (!gdiImg.fontOld){
+		gdiImg.fontOld = old;
+	} else {
+        DeleteObject(old);
+    }
+    //SetBkColor(gdiImg.hdcBmp,RGB(255,0,0));
+	//SetBkMode(gdiImg.hdcBmp,TRANSPARENT);
+}
+void text_set_font_height(int height);
+void text_set_color(uint32_t color);
+void text_draw(int left, int right, int bottom, int top, char *str){
+    BITMAPINFO_TRUECOLOR32 bmi = {
+		.bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
+		.bmiHeader.biWidth = gdiImg.width,
+		.bmiHeader.biHeight = gdiImg.height,
+		.bmiHeader.biPlanes = 1,
+		.bmiHeader.biCompression = BI_RGB | BI_BITFIELDS,
+		.bmiHeader.biBitCount = 32,
+		.bmiColors[0].rgbRed = 0xff,
+		.bmiColors[1].rgbGreen = 0xff,
+		.bmiColors[2].rgbBlue = 0xff,
+	};
+    HBITMAP hbm, hbmOld;
+    unsigned char *pixels;
+    hbm = CreateDIBSection(gdiImg.hdcBmp,(BITMAPINFO *)&bmi,DIB_RGB_COLORS,&pixels,0,0);
+	ASSERT(hbm);
+    for (size_t i = 0; i < gdiImg.width*gdiImg.height; i++){
+        pixels[i*4+0] = gdiImg.pixels[i*4+2];
+        pixels[i*4+1] = gdiImg.pixels[i*4+1];
+        pixels[i*4+2] = gdiImg.pixels[i*4+0];
+    }
+	hbmOld = SelectObject(gdiImg.hdcBmp,hbm);
+
+    RECT r = {
+        .left = left,
+        .right = right,
+        .bottom = gdiImg.height-bottom,
+        .top = gdiImg.height-top
+    };
+    SetTextColor(gdiImg.hdcBmp,RGB(0,255,0));
+    SetBkColor(gdiImg.hdcBmp,RGB(0,0,255));
+    DrawTextA(gdiImg.hdcBmp,str,-1,&r,DT_LEFT|DT_NOPREFIX);
+    GdiFlush();
+
+    for (size_t i = 0; i < gdiImg.width*gdiImg.height; i++){
+        gdiImg.pixels[i*4+0] = pixels[i*4+2];
+        gdiImg.pixels[i*4+1] = pixels[i*4+1];
+        gdiImg.pixels[i*4+2] = pixels[i*4+0];
+    }
+
+    SelectObject(gdiImg.hdcBmp,hbmOld);
+    DeleteObject(hbm);
 }
 
 HWND gwnd;
