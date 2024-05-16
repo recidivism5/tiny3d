@@ -78,7 +78,7 @@ void text_set_target_image(uint32_t *pixels, int width, int height);
 void text_set_font(char *ttfPathFormat, ...);
 void text_set_font_height(int height);
 void text_set_color(uint32_t color);
-void text_draw(int left, int right, int bottom, int top, char *str);
+void text_draw(int left, int right, int bottom, int top, wchar_t *str);
 
 #define COUNT(arr) (sizeof(arr)/sizeof(*arr))
 #define LERP(a,b,t) ((a) + (t)*((b)-(a)))

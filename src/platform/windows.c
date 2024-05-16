@@ -322,12 +322,13 @@ static void ensure_hdcBmp(){
         HDC hdcScreen = GetDC(0);
         gdiImg.hdcBmp = CreateCompatibleDC(hdcScreen);
         ReleaseDC(0,hdcScreen);
+        SetBkMode(gdiImg.hdcBmp,TRANSPARENT);
     }
 }
 void text_set_target_image(uint32_t *pixels, int width, int height){
     gdiImg.width = width;
     gdiImg.height = height;
-    gdiImg.pixels = pixels;
+    gdiImg.pixels = (unsigned char *)pixels;
 
     ensure_hdcBmp();
 }
@@ -365,7 +366,7 @@ void text_set_font(char *ttfPathFormat, ...){
 }
 void text_set_font_height(int height);
 void text_set_color(uint32_t color);
-void text_draw(int left, int right, int bottom, int top, char *str){
+void text_draw(int left, int right, int bottom, int top, wchar_t *str){
     BITMAPINFO_TRUECOLOR32 bmi = {
 		.bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
 		.bmiHeader.biWidth = gdiImg.width,
@@ -395,8 +396,7 @@ void text_draw(int left, int right, int bottom, int top, char *str){
         .top = gdiImg.height-top
     };
     SetTextColor(gdiImg.hdcBmp,RGB(0,255,0));
-    SetBkColor(gdiImg.hdcBmp,RGB(0,0,255));
-    DrawTextA(gdiImg.hdcBmp,str,-1,&r,DT_LEFT|DT_NOPREFIX);
+    DrawTextW(gdiImg.hdcBmp,str,-1,&r,DT_LEFT|DT_NOPREFIX);
     GdiFlush();
 
     for (size_t i = 0; i < gdiImg.width*gdiImg.height; i++){
