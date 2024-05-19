@@ -240,83 +240,7 @@ static struct GdiImage{
 	HDC hdcBmp;
 	HFONT fontOld;
 } gdiImg;
-/*
-static void GdiImageNew(GdiImage *img, int width, int height){
-	img->width = width;
-	img->height = height;
-	HDC hdcScreen = GetDC(0);
-	img->hdcBmp = CreateCompatibleDC(hdcScreen);
-	ReleaseDC(0,hdcScreen);
-	BITMAPINFO_TRUECOLOR32 bmi = {
-		.bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
-		.bmiHeader.biWidth = width,
-		.bmiHeader.biHeight = height,
-		.bmiHeader.biPlanes = 1,
-		.bmiHeader.biCompression = BI_RGB | BI_BITFIELDS,
-		.bmiHeader.biBitCount = 32,
-		.bmiColors[0].rgbRed = 0xff,
-		.bmiColors[1].rgbGreen = 0xff,
-		.bmiColors[2].rgbBlue = 0xff,
-	};
-    img->hbm = CreateDIBitmap(img->hdcBmp,(BITMAPINFOHEADER *)&bmi,CBM_INIT,(void *)img->pixels,(BITMAPINFO *)&bmi,DIB_RGB_COLORS);
-	//img->hbm = CreateDIBSection(img->hdcBmp,(BITMAPINFO *)&bmi,DIB_RGB_COLORS,(void **)&img->pixels,0,0);
-	ASSERT(img->hbm);
-	img->hbmOld = SelectObject(img->hdcBmp,img->hbm);
-	img->fontOld = 0;
-}
 
-static void GdiImageDestroy(GdiImage *img){
-	if (img->fontOld){
-		SelectObject(img->hdcBmp,img->fontOld);
-	}
-	SelectObject(img->hdcBmp,img->hbmOld);
-	DeleteDC(img->hdcBmp);
-	DeleteObject(img->hbm);
-	memset(img,0,sizeof(*img));
-}
-
-static void GdiImageSetFont(GdiImage *img, HFONT font){
-	HFONT old = SelectObject(img->hdcBmp,font);
-	if (!img->fontOld){
-		img->fontOld = old;
-	}
-	SetBkMode(img->hdcBmp,TRANSPARENT);
-}
-
-static void GdiImageSetFontColor(GdiImage *img, uint32_t color){
-	SetTextColor(img->hdcBmp,color & 0xffffff);
-}
-
-static void GdiImageDrawText(GdiImage *img, WCHAR *str, int x, int y){
-	ExtTextOutW(img->hdcBmp,x,y,0,0,str,(UINT)wcslen(str),0);
-}
-
-static void GdiImageTextDimensions(GdiImage *img, WCHAR *str, int *width, int *height){
-	RECT r = {0};
-	DrawTextW(img->hdcBmp,str,(UINT)wcslen(str),&r,DT_CALCRECT|DT_NOPREFIX);
-	*width = r.right-r.left;
-	*height = r.bottom-r.top;
-}
-
-static HFONT GetUserChosenFont(){
-	LOGFONTW lf;
-	CHOOSEFONTW cf = {
-		.lStructSize = sizeof(cf),
-		.lpLogFont = &lf,
-		.Flags = CF_INITTOLOGFONTSTRUCT,
-	};
-	ASSERT(ChooseFontW(&cf));
-	return CreateFontIndirectW(&lf);
-}
-
-static HFONT GetSystemUiFont(){
-	NONCLIENTMETRICSW ncm = {
-		.cbSize = sizeof(ncm)
-	};
-	SystemParametersInfoW(SPI_GETNONCLIENTMETRICS,sizeof(ncm),&ncm,0);
-	return CreateFontIndirectW(&ncm.lfCaptionFont);
-}
-*/
 static void ensure_hdcBmp(){
     if (!gdiImg.hdcBmp){
         HDC hdcScreen = GetDC(0);
@@ -557,43 +481,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam){
             UINT32 remaining = total - padding;
             int16_t *samples;
             ASSERT(SUCCEEDED(renderClient->lpVtbl->GetBuffer(renderClient, remaining, (BYTE **)&samples)));
-
-            #if USE_GL
-                update((double)(t1.QuadPart-tstart.QuadPart) / (double)freq.QuadPart, (double)(t1.QuadPart-t0.QuadPart) / (double)freq.QuadPart, width, height, (int)remaining, samples);
-            #else
-                update((double)(t1.QuadPart-tstart.QuadPart) / (double)freq.QuadPart, (double)(t1.QuadPart-t0.QuadPart) / (double)freq.QuadPart, (int)remaining, samples);
-                
-                glViewport(0,0,width,height);
-
-                glClearColor(0.0f,0.0f,1.0f,1.0f);
-                glClear(GL_COLOR_BUFFER_BIT);
-
-                static GLuint texture = 0;
-                if (!texture){
-                    glGenTextures(1,&texture);
-                    glBindTexture(GL_TEXTURE_2D,texture);
-                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-                }
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCREEN_WIDTH, SCREEN_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, screen);
-                int scale = 1;
-                while (SCREEN_WIDTH*scale <= width && SCREEN_HEIGHT*scale <= height){
-                    scale++;
-                }
-                scale--;
-                int scaledWidth = scale * SCREEN_WIDTH;
-                int scaledHeight = scale * SCREEN_HEIGHT;
-                int x = width/2-scaledWidth/2;
-                int y = height/2-scaledHeight/2;
-                glViewport(x,y,scaledWidth,scaledHeight);
-                glEnable(GL_TEXTURE_2D);
-                glBegin(GL_QUADS);
-                glTexCoord2f(0,0); glVertex2f(-1,-1);
-                glTexCoord2f(1,0); glVertex2f(1,-1);
-                glTexCoord2f(1,1); glVertex2f(1,1);
-                glTexCoord2f(0,1); glVertex2f(-1,1);
-                glEnd();
-            #endif
+            update((double)(t1.QuadPart-tstart.QuadPart) / (double)freq.QuadPart, (double)(t1.QuadPart-t0.QuadPart) / (double)freq.QuadPart, width, height, (int)remaining, samples);
             ASSERT(SUCCEEDED(renderClient->lpVtbl->ReleaseBuffer(renderClient,remaining,0)));
             t0 = t1;
 
@@ -650,14 +538,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam){
     return DefWindowProcW(hwnd, msg, wparam, lparam);
 }
 
-#if USE_GL
 void open_window(int width, int height){
-    int scale = 1;
-    int SCREEN_WIDTH = width;
-    int SCREEN_HEIGHT = height;
-#else
-void open_window(int scale){
-#endif
     WNDCLASSEXW wcex = {
         .cbSize = sizeof(wcex),
         .style = CS_HREDRAW | CS_VREDRAW,
@@ -670,10 +551,10 @@ void open_window(int scale){
     };
     ASSERT(RegisterClassExW(&wcex));
 
-    ASSERT(scale >= 0);
-    if (scale > 0){
+    ASSERT(width >= 0 && height >= 0);
+    if (width > 0 && height > 0){
 
-        RECT initialRect = {0, 0, scale*SCREEN_WIDTH, scale*SCREEN_HEIGHT};
+        RECT initialRect = {0, 0, width, height};
         AdjustWindowRect(&initialRect,WS_OVERLAPPEDWINDOW,FALSE);
         LONG initialWidth = initialRect.right - initialRect.left;
         LONG initialHeight = initialRect.bottom - initialRect.top;

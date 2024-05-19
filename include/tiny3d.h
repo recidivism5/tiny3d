@@ -18,38 +18,24 @@
 #define TINY3D_SAMPLE_RATE 44100
 #define TINY3D_AUDIO_BUFSZ 8192
 
-#define USE_GL 1
-#if USE_GL
-	#if __APPLE__
-		#include <OpenGL/OpenGL.h>
-		#include <OpenGL/gl.h>
-		#include <OpenGL/glu.h>
-	#else
-		#if _WIN32
-			#define WIN32_LEAN_AND_MEAN
-			#define NOMINMAX
-			#define UNICODE
-			#define COBJMACROS
-			#include <windows.h>//must include before gl.h
-		#endif
-		#include <GL/gl.h>
-		#include <GL/glu.h>
-	#endif
-	void open_window(int width, int height); //width = 0: fullscreen
-	//define this:
-	extern void update(double time, double deltaTime, int width, int height, int nAudioFrames, int16_t *audioSamples);
+#if __APPLE__
+	#include <OpenGL/OpenGL.h>
+	#include <OpenGL/gl.h>
+	#include <OpenGL/glu.h>
 #else
-	#define SCREEN_WIDTH 256
-	#define SCREEN_HEIGHT 192
-	extern uint32_t screen[SCREEN_WIDTH*SCREEN_HEIGHT];
-	void open_window(int scale); //scale = 0: fullscreen
-	//define this:
-	extern void update(double time, double deltaTime, int nAudioFrames, int16_t *audioSamples);
-
-	//drawing functions:
-	void clear_screen(uint32_t color);
-	void draw_line(int x0, int y0, int x1, int y1, uint32_t color);
+	#if _WIN32
+		#define WIN32_LEAN_AND_MEAN
+		#define NOMINMAX
+		#define UNICODE
+		#define COBJMACROS
+		#include <windows.h>//must include before gl.h
+	#endif
+	#include <GL/gl.h>
+	#include <GL/glu.h>
 #endif
+void open_window(int width, int height); //width = 0: fullscreen
+//define this:
+extern void update(double time, double deltaTime, int width, int height, int nAudioFrames, int16_t *audioSamples);
 
 //define these:
 #define KEY_MOUSE_LEFT 128
