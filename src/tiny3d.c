@@ -2,21 +2,21 @@
 
 char *assertPath;
 
+static char fmtStr[4096];
+
 void fatal_error(char *format, ...){
 	va_list args;
 	va_start(args,format);
 
-	static char msg[4096];
-	vsnprintf(msg,COUNT(msg),format,args);
-	fprintf(stderr,"%s\n",msg);
-	error_box(msg);
+	vsnprintf(fmtStr,COUNT(fmtStr),format,args);
+	fprintf(stderr,"%s\n",fmtStr);
+	error_box(fmtStr);
 
 	va_end(args);
 	
 	exit(1);
 }
 
-static char fmtStr[4096];
 char *format_string(char *format, ...){
 	va_list args;
 	va_start(args,format);

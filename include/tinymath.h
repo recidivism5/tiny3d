@@ -12,8 +12,12 @@ typedef double dvec3[3];
 
 typedef vec4 mat4[4];
 
+int modulo(int i, int m);
+
 void ivec2_copy(ivec2 src, ivec2 dst);
 int ivec2_manhattan(ivec2 a, ivec2 b);
+
+int ivec3_manhattan(ivec3 a, ivec3 b);
 
 void vec2_copy(vec2 src, vec2 dst);
 void vec2_add(vec2 a, vec2 b, vec2 dst);

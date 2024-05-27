@@ -4,6 +4,7 @@
 #import <OpenGL/OpenGL.h>
 #import <OpenGL/gl.h>
 #import <CoreVideo/CVDisplayLink.h>
+#import <CoreText/CoreText.h>
 
 #include <AudioToolbox/AudioQueue.h>
 #include <AudioToolbox/ExtendedAudioFile.h>
@@ -69,8 +70,19 @@ uint32_t *load_image(bool flip_vertically, int *width, int *height, char *format
 
 	NSImage* img = [[NSImage alloc] initWithContentsOfFile:[NSString stringWithUTF8String:assertPath]];
 	ASSERT_FILE(img);
-	*width = (int)[img size].width;
-	*height = (int)[img size].height;
+	if (img.representations && img.representations.count > 0) {
+        long lastSquare = 0, curSquare;
+        NSImageRep *imageRep;
+        for (imageRep in img.representations) {
+            curSquare = imageRep.pixelsWide * imageRep.pixelsHigh;
+            if (curSquare > lastSquare) {
+                img.size = NSMakeSize(imageRep.pixelsWide, imageRep.pixelsHigh);
+                lastSquare = curSquare;
+            }
+        }
+    }
+	*width = (int)img.size.width;
+	*height = (int)img.size.height;
 	uint32_t *pixels = malloc((*width)*(*height)*sizeof(*pixels));
 	ASSERT_FILE(pixels);
 
@@ -84,7 +96,8 @@ uint32_t *load_image(bool flip_vertically, int *width, int *height, char *format
 		colorSpace,
 		kCGImageAlphaPremultipliedLast
 	);
-    NSGraphicsContext* gctx = [NSGraphicsContext graphicsContextWithCGContext:ctx flipped:!flip_vertically];
+	CGContextSetInterpolationQuality(ctx,kCGInterpolationNone);
+    NSGraphicsContext* gctx = [NSGraphicsContext graphicsContextWithCGContext:ctx flipped:flip_vertically];
     [NSGraphicsContext setCurrentContext:gctx];
     [img drawInRect:NSMakeRect(0, 0, *width, *height)];
     [NSGraphicsContext setCurrentContext:nil];
@@ -167,6 +180,67 @@ int16_t *load_audio(int *nFrames, char *format, ...){
 
 	return frames;
 }
+struct {
+	uint32_t *pixels;
+	int width, height;
+	float r,g,b;
+	int fontHeight;
+} cgImg = {.fontHeight = 12};
+void text_set_target_image(uint32_t *pixels, int width, int height){
+	cgImg.pixels = pixels;
+	cgImg.width = width;
+	cgImg.height = height;
+}
+void text_set_font(char *ttfPathFormat, ...);
+void text_set_font_height(int height){
+	cgImg.fontHeight = height;
+}
+void text_set_color(float r, float g, float b){
+	cgImg.r = r;
+	cgImg.g = g;
+	cgImg.b = b;
+}
+void text_draw(int left, int right, int bottom, int top, float angle, char *str){
+	CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceGenericRGB);
+    CGContextRef ctx = CGBitmapContextCreate(
+		cgImg.pixels,
+		cgImg.width,
+		cgImg.height,
+		8,
+		(cgImg.width)*sizeof(*cgImg.pixels),
+		colorSpace,
+		kCGImageAlphaPremultipliedLast
+	);
+	CGContextSetInterpolationQuality(ctx,kCGInterpolationNone);
+	
+	CTFontRef font = CTFontCreateWithName(CFSTR("Comic Sans MS"), (float)cgImg.fontHeight, nil);
+	NSDictionary* attributes = [NSDictionary dictionaryWithObjectsAndKeys:
+                            (id)font, NSFontAttributeName,
+                            [NSColor colorWithCalibratedRed:cgImg.r green:cgImg.g blue:cgImg.b alpha:1.0f], NSForegroundColorAttributeName,
+                            nil];
+	NSAttributedString* as = [[NSAttributedString alloc] initWithString:[NSString stringWithUTF8String:str] attributes:attributes];
+	CFRelease(font);
+	CTFramesetterRef framesetter = CTFramesetterCreateWithAttributedString((CFAttributedStringRef)as);
+	CGRect rect = CGRectMake(left, bottom, right-left, top-bottom);
+	CGPathRef path = CGPathCreateWithRect(rect, NULL);
+	CTFrameRef frame = CTFramesetterCreateFrame(framesetter, CFRangeMake(0, 0), path, NULL);
+	//CGContextSetRGBFillColor(ctx, 1.0, 1.0, 1.0, 1.0);
+	//CGContextFillRect(ctx, CGRectMake(0.0, 0.0, cgImg.width, cgImg.height));
+	CGContextSetTextMatrix(ctx, CGAffineTransformIdentity);
+	CGContextRotateCTM(ctx, angle);
+	CGContextTranslateCTM(ctx, 0, cgImg.height);
+	CGContextScaleCTM(ctx, 1.0, -1.0);
+	
+	//CGContextSetTextPosition(ctx, 0, -14);
+	CTFrameDraw(frame,ctx);
+
+	CFRelease(frame);
+	CFRelease(framesetter);
+	CGPathRelease(path);
+
+	CGContextRelease(ctx);
+    CGColorSpaceRelease(colorSpace);
+}
 
 #if defined(MAC_OS_X_VERSION_10_12) && MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_12
    static const NSAlertStyle kInformationalStyle = NSAlertStyleInformational;
@@ -227,42 +301,7 @@ void lock_mouse(bool locked){
 	t1 = get_time();
 
 	int nFrames = fenster_audio_available(&audioState);
-	#if USE_GL
-		update((double)(t1-tstart) / 1000000000.0, (double)(t1-t0) / 1000000000.0, width, height, nFrames, audioState.buf+audioState.pos*2);
-	#else
-		update((double)(t1-tstart) / 1000000000.0, (double)(t1-t0) / 1000000000.0, nFrames, audioState.buf+audioState.pos*2);
-
-		glViewport(0,0,width,height);
-
-		glClearColor(0.0f,0.0f,1.0f,1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
-
-		static GLuint texture = 0;
-		if (!texture){
-			glGenTextures(1,&texture);
-			glBindTexture(GL_TEXTURE_2D,texture);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		}
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCREEN_WIDTH, SCREEN_HEIGHT, 0, GL_BGRA, GL_UNSIGNED_BYTE, screen);
-		int scale = 1;
-		while (SCREEN_WIDTH*scale <= width && SCREEN_HEIGHT*scale <= height){
-			scale++;
-		}
-		scale--;
-		int scaledWidth = scale * SCREEN_WIDTH;
-		int scaledHeight = scale * SCREEN_HEIGHT;
-		int x = width/2-scaledWidth/2;
-		int y = height/2-scaledHeight/2;
-		glViewport(x,y,scaledWidth,scaledHeight);
-		glEnable(GL_TEXTURE_2D);
-		glBegin(GL_QUADS);
-		glTexCoord2f(0,0); glVertex2f(-1,-1);
-		glTexCoord2f(1,0); glVertex2f(1,-1);
-		glTexCoord2f(1,1); glVertex2f(1,1);
-		glTexCoord2f(0,1); glVertex2f(-1,1);
-		glEnd();
-	#endif
+	update((double)(t1-tstart) / 1000000000.0, (double)(t1-t0) / 1000000000.0, width, height, nFrames, audioState.buf+audioState.pos*2);
 
 	audioState.pos += nFrames;
 	if (audioState.pos >= TINY3D_AUDIO_BUFSZ){
@@ -350,9 +389,11 @@ CVReturn displayLinkCallback(CVDisplayLinkRef displayLink, const CVTimeStamp *in
 
 static int swidth, sheight;
 
+NSWindow* window;
+MyOpenGLView* glView;
+
 @interface AppDelegate : NSObject <NSApplicationDelegate> {
-   NSWindow* window;
-   MyOpenGLView* glView;
+   
 }
 @end
 @implementation AppDelegate
@@ -368,7 +409,7 @@ static int swidth, sheight;
 	  styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskClosable|NSWindowStyleMaskMiniaturizable|NSWindowStyleMaskResizable
 	  backing:NSBackingStoreBuffered
 	  defer:NO];
-   [window setTitle:@"OpenGL Window"];
+   [window setTitle:@"tiny3d"];
    [window setAcceptsMouseMovedEvents:YES];
 
    // Create the OpenGL view
@@ -407,15 +448,17 @@ static int swidth, sheight;
 }
 @end
 
-#if USE_GL
+void toggle_fullscreen(){
+	[window toggleFullScreen:nil];
+}
+
+float get_dpi_scale(){
+	return window.screen.backingScaleFactor;
+}
+
 void open_window(int width, int height){
 	swidth = width;
 	sheight = height;
-#else
-void open_window(int scale){
-	swidth = SCREEN_WIDTH * scale;
-	sheight = SCREEN_HEIGHT * scale;
-#endif
 	[NSAutoreleasePool new];
 	NSApplication* app = [NSApplication sharedApplication];
 	[app setActivationPolicy:NSApplicationActivationPolicyRegular];

@@ -11,7 +11,7 @@ include_directories(${OPENGL_INCLUDE_DIRS})
 
 if (WIN32)
 	target_sources(${PROJECT_NAME} PRIVATE src/platform/windows.c)
-	target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} dwmapi uuid windowscodecs mfplat.lib mfreadwrite.lib mfuuid.lib)
+	target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} dwmapi uuid windowscodecs mfplat.lib mfreadwrite.lib mfuuid.lib shlwapi.lib)
 elseif(APPLE)
 	target_sources(${PROJECT_NAME} PRIVATE src/platform/mac.m)
 	target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} m "-framework Cocoa -framework CoreVideo -framework AudioToolbox")

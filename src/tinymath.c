@@ -9,12 +9,28 @@
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 
+int modulo(int i, int m){
+	return (i % m + m) % m;
+}
+
 void ivec2_copy(ivec2 src, ivec2 dst){
 	memcpy(dst,src,sizeof(ivec2));
 }
 
 int ivec2_manhattan(ivec2 a, ivec2 b){
-	return abs(a[0]-b[0]) + abs(a[1]-b[1]);
+	int sum = 0;
+	for (int i = 0; i < 2; i++){
+		sum += abs(a[i]-b[i]);
+	}
+	return sum;
+}
+
+int ivec3_manhattan(ivec3 a, ivec3 b){
+	int sum = 0;
+	for (int i = 0; i < 3; i++){
+		sum += abs(a[i]-b[i]);
+	}
+	return sum;
 }
 
 void vec2_copy(vec2 src, vec2 dst){
