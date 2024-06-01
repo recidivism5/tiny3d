@@ -452,7 +452,6 @@ wchar_t *get_keyboard_layout_name(){
 
 void get_key_text(int scancode, wchar_t *buf, int bufcount){
     GetKeyNameTextW(scancode<<16,buf,bufcount);
-    return buf;
 }
 
 typedef struct {
@@ -465,7 +464,9 @@ static struct GdiImage{
 	unsigned char *pixels;
 	HDC hdcBmp;
 	HFONT fontOld;
-} gdiImg;
+    int fontHeight;
+    char fontName[MAX_PATH];
+} gdiImg = {.fontHeight = 12};
 
 static void ensure_hdcBmp(){
     if (!gdiImg.hdcBmp){
@@ -482,26 +483,9 @@ void text_set_target_image(uint32_t *pixels, int width, int height){
 
     ensure_hdcBmp();
 }
-void text_set_font(char *ttfPathFormat, ...){
-    va_list args;
-	va_start(args,ttfPathFormat);
-	char *path = local_path_to_absolute_vararg(ttfPathFormat,args);
-	va_end(args);
-
-    ASSERT(1 == AddFontResourceExA(path,FR_PRIVATE,NULL));
-
-    char name[256];
-    char *start = strrchr(path,'/') ? strrchr(path,'/')+1 : strrchr(path,'\\') ? strrchr(path,'\\')+1 : path;
-    char *end = strrchr(path,'.') ? strrchr(path,'.') : start + strlen(start);
-    size_t len = end - start;
-    ASSERT(len < COUNT(name));
-    memcpy(name,start,len);
-    name[len] = 0;
-
-    puts(name);
-    
-    HFONT font = CreateFontA(-48,0,0,0,FW_DONTCARE,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,
-                CLIP_DEFAULT_PRECIS,ANTIALIASED_QUALITY, VARIABLE_PITCH,"Nunito");
+static void text_update_font(){
+    HFONT font = CreateFontA(-gdiImg.fontHeight,0,0,0,FW_DONTCARE,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,
+                CLIP_DEFAULT_PRECIS,ANTIALIASED_QUALITY, VARIABLE_PITCH,gdiImg.fontName);
 
     ensure_hdcBmp();
 
@@ -511,14 +495,24 @@ void text_set_font(char *ttfPathFormat, ...){
 	} else {
         DeleteObject(old);
     }
-    //SetBkColor(gdiImg.hdcBmp,RGB(255,0,0));
-	//SetBkMode(gdiImg.hdcBmp,TRANSPARENT);
 }
-void text_set_font_height(int height);
+void text_set_font(char *ttfPathFormat, ...){
+    va_list args;
+	va_start(args,ttfPathFormat);
+	char *path = local_path_to_absolute_vararg(ttfPathFormat,args);
+	va_end(args);
+    ASSERT(1 == AddFontResourceExA(path,FR_PRIVATE,NULL));
+    get_font_name(path,gdiImg.fontName,COUNT(gdiImg.fontName));
+    text_update_font();
+}
+void text_set_font_height(int height){
+    gdiImg.fontHeight = height;
+    text_update_font();
+}
 void text_set_color(float r, float g, float b){
     SetTextColor(gdiImg.hdcBmp,RGB((int)(255*r),(int)(255*g),(int)(255*b)));
 }
-void text_draw(int left, int right, int bottom, int top, wchar_t *str){
+void text_draw(int left, int right, int bottom, int top, char *str){
     BITMAPINFO_TRUECOLOR32 bmi = {
 		.bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
 		.bmiHeader.biWidth = gdiImg.width,
@@ -547,7 +541,7 @@ void text_draw(int left, int right, int bottom, int top, wchar_t *str){
         .bottom = gdiImg.height-bottom,
         .top = gdiImg.height-top
     };
-    DrawTextW(gdiImg.hdcBmp,str,-1,&r,DT_LEFT|DT_NOPREFIX|DT_EXPANDTABS);
+    DrawTextA(gdiImg.hdcBmp,str,-1,&r,DT_LEFT|DT_NOPREFIX|DT_EXPANDTABS);
     GdiFlush();
 
     for (size_t i = 0; i < gdiImg.width*gdiImg.height; i++){
@@ -590,6 +584,14 @@ void lock_mouse(bool locked){
 	} else {
         releaseMouse();
 	}
+}
+
+void toggle_fullscreen(){
+
+}
+
+float get_dpi_scale(){
+    return 1.0f;
 }
 
 static const uint8_t keycodes[] = {

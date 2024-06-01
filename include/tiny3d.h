@@ -64,11 +64,12 @@ void get_key_text(int scancode, wchar_t *buf, int bufcount);
 float get_dpi_scale();
 
 //text:
+void get_font_name(char *path, char *out, int outCount);
 void text_set_target_image(uint32_t *pixels, int width, int height);
 void text_set_font(char *ttfPathFormat, ...);
 void text_set_font_height(int height);
 void text_set_color(float r, float g, float b);
-void text_draw(int left, int right, int bottom, int top, float angle, char *str);
+void text_draw(int left, int right, int bottom, int top, char *str);
 
 #define COUNT(arr) (sizeof(arr)/sizeof(*arr))
 #define LERP(a,b,t) ((a) + (t)*((b)-(a)))
