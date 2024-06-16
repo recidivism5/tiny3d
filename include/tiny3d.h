@@ -15,9 +15,6 @@
 #include <whereami.h>
 #include <tinymath.h>
 
-#define TINY3D_SAMPLE_RATE 44100
-#define TINY3D_AUDIO_BUFSZ 8192
-
 #if __APPLE__
 	#include <OpenGL/OpenGL.h>
 	#include <OpenGL/gl.h>
@@ -33,22 +30,42 @@
 	#include <GL/gl.h>
 	#include <GL/glu.h>
 #endif
-void open_window(int width, int height); //width = 0: fullscreen
-void toggle_fullscreen();
-//define this:
-extern void update(double time, double deltaTime, int width, int height, int nAudioFrames, int16_t *audioSamples);
+
+#define TINY3D_SAMPLE_RATE 44100
+#define TINY3D_AUDIO_BUFSZ 8192
+
+#define KEY_MOUSE_LEFT -1
+#define KEY_MOUSE_RIGHT -2
+
+typedef struct {
+	uint8_t r,g,b,a;
+} color_t;
+
+typedef struct {
+	int width, height;
+	color_t *pixels;
+} image_t;
+
+typedef struct {
+	int width, height;
+	color_t *pixels;
+	float *depth;
+} framebuffer_t;
+
+//globals, use but don't modify:
+extern int window_width, window_height; //updated automatically whenever the window size is changed
 
 //define these:
-#define KEY_MOUSE_LEFT 128
-#define KEY_MOUSE_RIGHT 129
-extern void keydown(int key);
-extern void keyup(int key);
+extern void update(double time, double deltaTime, int nAudioFrames, int16_t *audioSamples);
+extern void keydown(int scancode);
+extern void keyup(int scancode);
 extern void mousemove(int x, int y);
 
+//utility functions:
+void open_window(int width, int height); //call this to start
+void toggle_fullscreen();
 bool is_mouse_locked(void);
 void lock_mouse(bool locked);
-
-//utility functions:
 void error_box(char *msg);
 void fatal_error(char *format, ...);
 char *format_string(char *format, ...);
@@ -70,6 +87,28 @@ void text_set_font(char *ttfPathFormat, ...);
 void text_set_font_height(int height);
 void text_set_color(float r, float g, float b);
 void text_draw(int left, int right, int bottom, int top, char *str);
+
+//2d:
+void t2d_set_source_image(image_t *img);
+void t2d_set_destination_image(image_t *img);
+void t2d_blit(int srcx, int srcy, int width, int height, int dstx, int dsty, bool xflip);
+void t2d_line(int x0, int y0, int x1, int y1, color_t color);
+
+//3d:
+void t3d_set_framebuffer(framebuffer_t *f);
+void t3d_set_texture(image_t *t);
+void t3d_clear(color_t color);
+void t3d_perspective(float fovy, float aspect, float nearZ, float farZ);
+void t3d_ortho(float left, float right, float bottom, float top, float nearZ, float farZ);
+void t3d_load_identity();
+void t3d_translate(float x, float y, float z);
+void t3d_rotate(float x, float y, float z, float angle);
+void t3d_position(float x, float y, float z);
+void t3d_texcoord(float u, float v);
+
+//software rendering assistance:
+//draws a framebuffer with integer scaling as high as will fit, centered in the window
+void draw_framebuffer(image_t *framebuffer);
 
 #define COUNT(arr) (sizeof(arr)/sizeof(*arr))
 #define LERP(a,b,t) ((a) + (t)*((b)-(a)))

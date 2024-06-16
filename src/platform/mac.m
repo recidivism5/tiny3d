@@ -293,13 +293,13 @@ void lock_mouse(bool locked){
 	}
 
 	//https://stackoverflow.com/questions/2440089/nsopenglview-resize-on-window-resize
-	int width = (int)[self convertRectToBacking:[self bounds]].size.width;
-	int height = (int)[self convertRectToBacking:[self bounds]].size.height;
+	window_width = (int)[self convertRectToBacking:[self bounds]].size.width;
+	window_height = (int)[self convertRectToBacking:[self bounds]].size.height;
 
 	t1 = get_time();
 
 	int nFrames = fenster_audio_available(&audioState);
-	update((double)(t1-tstart) / 1000000000.0, (double)(t1-t0) / 1000000000.0, width, height, nFrames, audioState.buf+audioState.pos*2);
+	update((double)(t1-tstart) / 1000000000.0, (double)(t1-t0) / 1000000000.0, nFrames, audioState.buf+audioState.pos*2);
 
 	audioState.pos += nFrames;
 	if (audioState.pos >= TINY3D_AUDIO_BUFSZ){

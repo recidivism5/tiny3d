@@ -1,4 +1,11 @@
 build
-*.exe
+*.app
+app.icns
 *.pdb
+*.cmake
+CMakeCache.txt
+compile_commands.json
+Makefile
+CMakeFiles
+reso.rc
 .vscode

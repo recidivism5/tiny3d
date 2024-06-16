@@ -1,10 +1,5 @@
 #include <tiny3d.h>
 
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
-#define UNICODE
-#define COBJMACROS
-#include <windows.h>
 #include <windowsx.h>
 #include <dwmapi.h>
 #include <wincodec.h>
@@ -21,10 +16,9 @@
 #include <commdlg.h>
 #include <shlwapi.h>
 
-#include <GL/gl.h>
-
 #include <mmdeviceapi.h>
 #include <audioclient.h>
+
 static const GUID _CLSID_MMDeviceEnumerator = {0xbcde0395, 0xe52f, 0x467c, {0x8e,0x3d, 0xc4,0x57,0x92,0x91,0x69,0x2e}};
 static const GUID _IID_IMMDeviceEnumerator = {0xa95664d2, 0x9614, 0x4f35, {0xa7,0x46, 0xde,0x8d,0xb6,0x36,0x17,0xe6}};
 static const GUID _IID_IAudioClient = {0x1cb9ad4c, 0xdbfa, 0x4c32, {0xb1,0x78, 0xc2,0xf5,0x68,0xa7,0x03,0xb2}};
@@ -594,19 +588,6 @@ float get_dpi_scale(){
     return 1.0f;
 }
 
-static const uint8_t keycodes[] = {
-    0,27,49,50,51,52,53,54,55,56,57,48,45,61,8,9,81,87,69,82,84,89,85,73,79,
-    80,91,93,10,0,65,83,68,70,71,72,74,75,76,59,39,96,0,92,90,88,67,86,66,78,
-    77,44,46,47,0,0,0,32,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,17,3,0,20,0,19,0,5,18,4,26,127
-};
-
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam){
     switch(msg){
         case WM_CREATE:{
@@ -688,8 +669,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam){
         case WM_PAINT:{
             RECT cr = {0};
             GetClientRect(hwnd,&cr);
-            int width = cr.right-cr.left;
-            int height = cr.bottom-cr.top;
+            window_width = cr.right-cr.left;
+            window_height = cr.bottom-cr.top;
 
             static LARGE_INTEGER freq,tstart,t0,t1;
             static bool started = false;
@@ -710,7 +691,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam){
             UINT32 remaining = total - padding;
             int16_t *samples;
             ASSERT(SUCCEEDED(renderClient->lpVtbl->GetBuffer(renderClient, remaining, (BYTE **)&samples)));
-            update((double)(t1.QuadPart-tstart.QuadPart) / (double)freq.QuadPart, (double)(t1.QuadPart-t0.QuadPart) / (double)freq.QuadPart, width, height, (int)remaining, samples);
+            update((double)(t1.QuadPart-tstart.QuadPart) / (double)freq.QuadPart, (double)(t1.QuadPart-t0.QuadPart) / (double)freq.QuadPart, (int)remaining, samples);
             ASSERT(SUCCEEDED(renderClient->lpVtbl->ReleaseBuffer(renderClient,remaining,0)));
             t0 = t1;
 
@@ -753,14 +734,22 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam){
             keydown(KEY_MOUSE_RIGHT);
             return 0;
         }
+        case WM_LBUTTONUP:{
+            keyup(KEY_MOUSE_LEFT);
+            return 0;
+        }
+        case WM_RBUTTONUP:{
+            keyup(KEY_MOUSE_RIGHT);
+            return 0;
+        }
         case WM_KEYDOWN:{
             if (!(HIWORD(lparam) & KF_REPEAT)){
-                keydown((int)keycodes[HIWORD(lparam) & 0x1ff]);
+                keydown((lparam & 0xff0000)>>16);
             }
             break;
         }
         case WM_KEYUP:{
-            keyup((int)keycodes[HIWORD(lparam) & 0x1ff]);
+            keyup((lparam & 0xff0000)>>16);
             break;
         }
     }
@@ -768,50 +757,35 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam){
 }
 
 void open_window(int width, int height){
+    SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
     WNDCLASSEXW wcex = {
         .cbSize = sizeof(wcex),
         .style = CS_HREDRAW | CS_VREDRAW,
         .lpfnWndProc = WndProc,
         .hInstance = GetModuleHandleW(0),
-        //.hIcon = LoadIconW(GetModuleHandleW(0),MAKEINTRESOURCEW(RID_ICON)),
+        .hIcon = LoadIconW(GetModuleHandleW(0),MAKEINTRESOURCEW(69)),
         .hCursor = LoadCursorW(0,IDC_ARROW),
         .lpszClassName = L"tiny3d",
         .hIconSm = 0,
     };
     ASSERT(RegisterClassExW(&wcex));
 
-    ASSERT(width >= 0 && height >= 0);
-    if (width > 0 && height > 0){
-
-        RECT initialRect = {0, 0, width, height};
-        AdjustWindowRect(&initialRect,WS_OVERLAPPEDWINDOW,FALSE);
-        LONG initialWidth = initialRect.right - initialRect.left;
-        LONG initialHeight = initialRect.bottom - initialRect.top;
-
-        gwnd = CreateWindowExW(
-            0, //WS_EX_OVERLAPPEDWINDOW fucks up the borders when maximized
-            wcex.lpszClassName,
-            wcex.lpszClassName,
-            WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            GetSystemMetrics(SM_CXSCREEN)/2-initialWidth/2,
-            GetSystemMetrics(SM_CYSCREEN)/2-initialHeight/2,
-            initialWidth, 
-            initialHeight,
-            0, 0, wcex.hInstance, 0
-        );
-    } else {
-        gwnd = CreateWindowExW(
-            0, //WS_EX_OVERLAPPEDWINDOW fucks up the borders when maximized
-            wcex.lpszClassName,
-            wcex.lpszClassName,
-            WS_POPUP | WS_VISIBLE,
-            0,
-            0,
-            GetSystemMetrics(SM_CXSCREEN), 
-            GetSystemMetrics(SM_CYSCREEN),
-            0, 0, wcex.hInstance, 0
-        );
-    }
+    ASSERT(width > 0 && height > 0);
+    RECT initialRect = {0, 0, width, height};
+    AdjustWindowRect(&initialRect,WS_OVERLAPPEDWINDOW,FALSE);
+    LONG initialWidth = initialRect.right - initialRect.left;
+    LONG initialHeight = initialRect.bottom - initialRect.top;
+    gwnd = CreateWindowExW(
+        0, //WS_EX_OVERLAPPEDWINDOW fucks up the borders when maximized
+        wcex.lpszClassName,
+        wcex.lpszClassName,
+        WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+        GetSystemMetrics(SM_CXSCREEN)/2-initialWidth/2,
+        GetSystemMetrics(SM_CYSCREEN)/2-initialHeight/2,
+        initialWidth, 
+        initialHeight,
+        0, 0, wcex.hInstance, 0
+    );
     ASSERT(gwnd);
 
     MSG msg;
