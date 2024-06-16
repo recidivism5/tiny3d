@@ -1,6 +1,8 @@
 build
 *.app
 app.icns
+*.exe
+!iconwriter.exe
 *.pdb
 *.cmake
 CMakeCache.txt
