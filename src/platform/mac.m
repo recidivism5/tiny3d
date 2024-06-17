@@ -1,6 +1,6 @@
 #include <tiny3d.h>
 
-#include <Carbon/HIToolbox/Events.h>
+#include <Carbon/Carbon.h>
 #import <Cocoa/Cocoa.h>
 #import <OpenGL/OpenGL.h>
 #import <OpenGL/gl.h>
