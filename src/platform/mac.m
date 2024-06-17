@@ -518,7 +518,7 @@ MyOpenGLView* glView;
 		defer:NO];
 	[window setTitle:@"tiny3d"];
 	[window setAcceptsMouseMovedEvents:YES];
-	[window setMinSize:[window contentLayoutRect].size];
+	[window setContentMinSize:[window contentLayoutRect].size];
 
    // Create the OpenGL view
    NSOpenGLPixelFormatAttribute attrs[] = {
