@@ -593,7 +593,7 @@ void toggle_fullscreen(){
             prev_rect.top,
             prev_rect.right-prev_rect.left,
             prev_rect.bottom-prev_rect.top,
-            TRUE
+            FALSE
         );
     } else {
         MONITORINFO monitor = {0};
@@ -601,7 +601,7 @@ void toggle_fullscreen(){
         GetMonitorInfo(MonitorFromWindow(gwnd, MONITOR_DEFAULTTONEAREST), &monitor);
         GetWindowRect(gwnd,&prev_rect);
         SetWindowLongPtr(gwnd, GWL_STYLE, WS_SYSMENU | WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE);
-        MoveWindow(gwnd, 0, 0, monitor.rcMonitor.right-monitor.rcMonitor.left, monitor.rcMonitor.bottom-monitor.rcMonitor.top, TRUE);
+        MoveWindow(gwnd, 0, 0, monitor.rcMonitor.right-monitor.rcMonitor.left, monitor.rcMonitor.bottom-monitor.rcMonitor.top, FALSE);
     }
     fullscreen = !fullscreen;
 }
