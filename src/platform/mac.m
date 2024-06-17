@@ -511,13 +511,14 @@ MyOpenGLView* glView;
 									NSMidY(screenRect) - NSMidY(viewRect),
 									viewRect.size.width, 
 									viewRect.size.height);
-   window = [[NSWindow alloc]
-	  initWithContentRect:windowRect
-	  styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskClosable|NSWindowStyleMaskMiniaturizable|NSWindowStyleMaskResizable
-	  backing:NSBackingStoreBuffered
-	  defer:NO];
-   [window setTitle:@"tiny3d"];
-   [window setAcceptsMouseMovedEvents:YES];
+	window = [[NSWindow alloc]
+		initWithContentRect:windowRect
+		styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskClosable|NSWindowStyleMaskMiniaturizable|NSWindowStyleMaskResizable
+		backing:NSBackingStoreBuffered
+		defer:NO];
+	[window setTitle:@"tiny3d"];
+	[window setAcceptsMouseMovedEvents:YES];
+	[window setMinSize:[window contentLayoutRect].size];
 
    // Create the OpenGL view
    NSOpenGLPixelFormatAttribute attrs[] = {
@@ -563,9 +564,9 @@ float get_dpi_scale(){
 	return window.screen.backingScaleFactor;
 }
 
-void open_window(int width, int height){
-	swidth = width;
-	sheight = height;
+void open_window(int min_width, int min_height){
+	swidth = min_width;
+	sheight = min_height;
 	[NSAutoreleasePool new];
 	NSApplication* app = [NSApplication sharedApplication];
 	[app setActivationPolicy:NSApplicationActivationPolicyRegular];
