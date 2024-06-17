@@ -1,5 +1,6 @@
 #include <tiny3d.h>
 
+#include <Carbon/HIToolbox/Events.h>
 #import <Cocoa/Cocoa.h>
 #import <OpenGL/OpenGL.h>
 #import <OpenGL/gl.h>
@@ -280,6 +281,124 @@ void lock_mouse(bool locked){
 	}
 }
 
+static int keycode_to_scancode(int keycode){ //credit chatgpt
+    switch (keycode){
+        case kVK_ANSI_A:              return 0x1E;
+        case kVK_ANSI_S:              return 0x1F;
+        case kVK_ANSI_D:              return 0x20;
+        case kVK_ANSI_F:              return 0x21;
+        case kVK_ANSI_H:              return 0x23;
+        case kVK_ANSI_G:              return 0x22;
+        case kVK_ANSI_Z:              return 0x2C;
+        case kVK_ANSI_X:              return 0x2D;
+        case kVK_ANSI_C:              return 0x2E;
+        case kVK_ANSI_V:              return 0x2F;
+        case kVK_ANSI_B:              return 0x30;
+        case kVK_ANSI_Q:              return 0x10;
+        case kVK_ANSI_W:              return 0x11;
+        case kVK_ANSI_E:              return 0x12;
+        case kVK_ANSI_R:              return 0x13;
+        case kVK_ANSI_Y:              return 0x15;
+        case kVK_ANSI_T:              return 0x14;
+        case kVK_ANSI_1:              return 0x02;
+        case kVK_ANSI_2:              return 0x03;
+        case kVK_ANSI_3:              return 0x04;
+        case kVK_ANSI_4:              return 0x05;
+        case kVK_ANSI_6:              return 0x07;
+        case kVK_ANSI_5:              return 0x06;
+        case kVK_ANSI_Equal:          return 0x0D;
+        case kVK_ANSI_9:              return 0x0A;
+        case kVK_ANSI_7:              return 0x08;
+        case kVK_ANSI_Minus:          return 0x0C;
+        case kVK_ANSI_8:              return 0x09;
+        case kVK_ANSI_0:              return 0x0B;
+        case kVK_ANSI_RightBracket:   return 0x1B;
+        case kVK_ANSI_O:              return 0x18;
+        case kVK_ANSI_U:              return 0x16;
+        case kVK_ANSI_LeftBracket:    return 0x1A;
+        case kVK_ANSI_I:              return 0x17;
+        case kVK_ANSI_P:              return 0x19;
+        case kVK_ANSI_L:              return 0x26;
+        case kVK_ANSI_J:              return 0x24;
+        case kVK_ANSI_Quote:          return 0x28;
+        case kVK_ANSI_K:              return 0x25;
+        case kVK_ANSI_Semicolon:      return 0x27;
+        case kVK_ANSI_Backslash:      return 0x2B;
+        case kVK_ANSI_Comma:          return 0x33;
+        case kVK_ANSI_Slash:          return 0x35;
+        case kVK_ANSI_N:              return 0x31;
+        case kVK_ANSI_M:              return 0x32;
+        case kVK_ANSI_Period:         return 0x34;
+        case kVK_ANSI_Grave:          return 0x29;
+        case kVK_ANSI_KeypadDecimal:  return 0x53;
+        case kVK_ANSI_KeypadMultiply: return 0x37;
+        case kVK_ANSI_KeypadPlus:     return 0x4E;
+        case kVK_ANSI_KeypadClear:    return 0x4A; // PC scancode for Num Lock
+        case kVK_ANSI_KeypadDivide:   return 0xB5;
+        case kVK_ANSI_KeypadEnter:    return 0x9C;
+        case kVK_ANSI_KeypadMinus:    return 0x4A;
+        case kVK_ANSI_KeypadEquals:   return 0x59;
+        case kVK_ANSI_Keypad0:        return 0x52;
+        case kVK_ANSI_Keypad1:        return 0x4F;
+        case kVK_ANSI_Keypad2:        return 0x50;
+        case kVK_ANSI_Keypad3:        return 0x51;
+        case kVK_ANSI_Keypad4:        return 0x4B;
+        case kVK_ANSI_Keypad5:        return 0x4C;
+        case kVK_ANSI_Keypad6:        return 0x4D;
+        case kVK_ANSI_Keypad7:        return 0x47;
+        case kVK_ANSI_Keypad8:        return 0x48;
+        case kVK_ANSI_Keypad9:        return 0x49;
+        case kVK_Return:              return 0x1C;
+        case kVK_Tab:                 return 0x0F;
+        case kVK_Space:               return 0x39;
+        case kVK_Delete:              return 0x0E;
+        case kVK_Escape:              return 0x01;
+        case kVK_Command:             return 0xE3; // PC scancode for left Meta
+        case kVK_Shift:               return 0x2A;
+        case kVK_CapsLock:            return 0x3A;
+        case kVK_Option:              return 0x38;
+        case kVK_Control:             return 0x1D;
+        case kVK_RightShift:          return 0x36;
+        case kVK_RightOption:         return 0xE038; // PC scancode for right Alt
+        case kVK_RightControl:        return 0xE01D; // PC scancode for right Ctrl
+        case kVK_Function:            return 0x63;
+        case kVK_F17:                 return 0x64;
+        case kVK_VolumeUp:            return 0x32; // not a standard PC scancode
+        case kVK_VolumeDown:          return 0xE0; // not a standard PC scancode
+        case kVK_Mute:                return 0x20; // not a standard PC scancode
+        case kVK_F18:                 return 0x65;
+        case kVK_F19:                 return 0x66;
+        case kVK_F20:                 return 0x67;
+        case kVK_F5:                  return 0x3F;
+        case kVK_F6:                  return 0x40;
+        case kVK_F7:                  return 0x41;
+        case kVK_F3:                  return 0x3D;
+        case kVK_F8:                  return 0x42;
+        case kVK_F9:                  return 0x43;
+        case kVK_F11:                 return 0x57;
+        case kVK_F13:                 return 0x68;
+        case kVK_F16:                 return 0x6A;
+        case kVK_F14:                 return 0x69;
+        case kVK_F10:                 return 0x44;
+        case kVK_F12:                 return 0x58;
+        case kVK_F15:                 return 0x6B;
+        case kVK_Help:                return 0xE035; // PC scancode for Help
+        case kVK_Home:                return 0xE047;
+        case kVK_PageUp:              return 0xE049;
+        case kVK_ForwardDelete:       return 0xE053;
+        case kVK_F4:                  return 0x3E;
+        case kVK_End:                 return 0xE04F;
+        case kVK_F2:                  return 0x3C;
+        case kVK_PageDown:            return 0xE051;
+        case kVK_F1:                  return 0x3B;
+        case kVK_LeftArrow:           return 0xE04B;
+        case kVK_RightArrow:          return 0xE04D;
+        case kVK_DownArrow:           return 0xE050;
+        case kVK_UpArrow:             return 0xE048;
+        default:                      return -1; // return -1 if keycode is not recognized
+    }
+}
+
 @interface MyOpenGLView : NSOpenGLView
 @end
 @implementation MyOpenGLView
@@ -358,24 +477,14 @@ void lock_mouse(bool locked){
 	//NSLog(@"Right mouse up: %lf, %lf", point.x, point.y);
 }
 
-static const uint8_t keycodes[128] = {
-	65,83,68,70,72,71,90,88,67,86,0,66,81,87,69,
-	82,89,84,49,50,51,52,54,53,61,57,55,45,56,48,
-	93,79,85,91,73,80,10,76,74,39,75,59,92,44,47,
-	78,77,46,9,32,96,8,0,27,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,26,2,3,127,0,5,0,4,0,20,19,18,17,0
-};
-
 - (void) keyDown: (NSEvent*) event {
 	if ([event isARepeat] == NO) {
-		keydown(keycodes[[event keyCode]]);
+		keydown(keycode_to_scancode([event keyCode]));
 	}
 }
 
 - (void) keyUp: (NSEvent*) event {
-	keyup(keycodes[[event keyCode]]);
+	keyup(keycode_to_scancode([event keyCode]));
 }
 @end
 
