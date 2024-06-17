@@ -567,6 +567,9 @@ void releaseMouse(){
     ShowCursor(1);
 }
 
+static int local_min_width, local_min_height;
+static RECT prev_rect;
+
 static bool mouse_is_locked = false;
 bool is_mouse_locked(void){
 	return mouse_is_locked;
@@ -580,8 +583,27 @@ void lock_mouse(bool locked){
 	}
 }
 
+static bool fullscreen = false;
 void toggle_fullscreen(){
-
+    if (fullscreen){
+        SetWindowLongPtr(gwnd, GWL_STYLE, WS_OVERLAPPEDWINDOW | WS_VISIBLE);
+        MoveWindow(
+            gwnd,
+            prev_rect.left,
+            prev_rect.top,
+            prev_rect.right-prev_rect.left,
+            prev_rect.bottom-prev_rect.top,
+            TRUE
+        );
+    } else {
+        MONITORINFO monitor = {0};
+        monitor.cbSize = sizeof(monitor);
+        GetMonitorInfo(MonitorFromWindow(gwnd, MONITOR_DEFAULTTONEAREST), &monitor);
+        GetWindowRect(gwnd,&prev_rect);
+        SetWindowLongPtr(gwnd, GWL_STYLE, WS_SYSMENU | WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE);
+        MoveWindow(gwnd, 0, 0, monitor.rcMonitor.right-monitor.rcMonitor.left, monitor.rcMonitor.bottom-monitor.rcMonitor.top, TRUE);
+    }
+    fullscreen = !fullscreen;
 }
 
 float get_dpi_scale(){
@@ -665,6 +687,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam){
             };
             RegisterRawInputDevices(&rid, 1, sizeof(rid));
             break;
+        }
+        case WM_GETMINMAXINFO:{
+            MINMAXINFO *mmi = (MINMAXINFO *)lparam;
+            mmi->ptMinTrackSize.x = local_min_width;
+            mmi->ptMinTrackSize.y = local_min_height;
+            return 0;
         }
         case WM_PAINT:{
             RECT cr = {0};
@@ -756,7 +784,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam){
     return DefWindowProcW(hwnd, msg, wparam, lparam);
 }
 
-void open_window(int width, int height){
+void open_window(int min_width, int min_height){
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
     WNDCLASSEXW wcex = {
         .cbSize = sizeof(wcex),
@@ -770,20 +798,20 @@ void open_window(int width, int height){
     };
     ASSERT(RegisterClassExW(&wcex));
 
-    ASSERT(width > 0 && height > 0);
-    RECT initialRect = {0, 0, width, height};
+    ASSERT(min_width > 0 && min_height > 0);
+    RECT initialRect = {0, 0, min_width, min_height};
     AdjustWindowRect(&initialRect,WS_OVERLAPPEDWINDOW,FALSE);
-    LONG initialWidth = initialRect.right - initialRect.left;
-    LONG initialHeight = initialRect.bottom - initialRect.top;
+    local_min_width = initialRect.right - initialRect.left;
+    local_min_height = initialRect.bottom - initialRect.top;
     gwnd = CreateWindowExW(
         0, //WS_EX_OVERLAPPEDWINDOW fucks up the borders when maximized
         wcex.lpszClassName,
         wcex.lpszClassName,
         WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-        GetSystemMetrics(SM_CXSCREEN)/2-initialWidth/2,
-        GetSystemMetrics(SM_CYSCREEN)/2-initialHeight/2,
-        initialWidth, 
-        initialHeight,
+        GetSystemMetrics(SM_CXSCREEN)/2-local_min_width/2,
+        GetSystemMetrics(SM_CYSCREEN)/2-local_min_height/2,
+        local_min_width, 
+        local_min_height,
         0, 0, wcex.hInstance, 0
     );
     ASSERT(gwnd);

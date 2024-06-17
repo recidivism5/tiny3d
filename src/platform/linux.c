@@ -667,34 +667,16 @@ static Display *display;
 static Window window;
 static GLXContext context;
 
-#define WINW 640
-#define WINH 480
+static bool fullscreen = false;
 
 #define _NET_WM_STATE_REMOVE    0l
 #define _NET_WM_STATE_ADD       1l
 
 void toggle_fullscreen(){
-    static bool fullscreen = false;
     fullscreen = !fullscreen;
     Atom _NET_WM_STATE = XInternAtom(display, "_NET_WM_STATE", False);
     Atom _NET_WM_STATE_FULLSCREEN = XInternAtom(display, "_NET_WM_STATE_FULLSCREEN", False);
     XEvent xevent;
-
-    XSizeHints *sizehints = XAllocSizeHints();
-    long flags = 0;
-    XGetWMNormalHints(display, window, sizehints, &flags);
-
-    if (fullscreen) {
-        /* we are going fullscreen so turn the flags off */
-        sizehints->flags &= ~(PMinSize | PMaxSize);
-    } else {
-        /* Reset the min/max width height to make the window non-resizable again */
-        sizehints->flags |= PMinSize | PMaxSize;
-        sizehints->min_width = sizehints->max_width = WINW;
-        sizehints->min_height = sizehints->max_height = WINH;
-    }
-    XSetWMNormalHints(display, window, sizehints);
-    XFree(sizehints);
 
     memset(&xevent, 0, sizeof (xevent));
     xevent.xany.type = ClientMessage;
@@ -708,14 +690,11 @@ void toggle_fullscreen(){
     XFlush(display);
 }
 
-void open_window(int width, int height){
+void open_window(int min_width, int min_height){
     display = XOpenDisplay(NULL);
 
     kbdesc = XkbGetMap(display, 0, XkbUseCoreKbd);
     XkbGetNames(display, XkbKeyNamesMask | XkbKeyAliasesMask, kbdesc);
-    for (int scancode = kbdesc->min_key_code; scancode < kbdesc->max_key_code; scancode++){
-        printf("%d: %.*s\n",scancode,XkbKeyNameLength,kbdesc->names->keys[scancode].name);
-    }
 
     XSetWindowAttributes xattr;
     XSizeHints *sizehints;
@@ -728,15 +707,15 @@ void open_window(int width, int height){
                        StructureNotifyMask | FocusChangeMask | PointerMotionMask;
 
     window = XCreateWindow(display, RootWindow(display, DefaultScreen(display)),
-                       0, 0, WINW, WINH,
+                       0, 0, min_width, min_height,
                        0, CopyFromParent, InputOutput, CopyFromParent,
                        CWEventMask, &xattr );
 
     sizehints = XAllocSizeHints();
     sizehints->flags = 0;
-    sizehints->min_width = sizehints->max_width = WINW;
-    sizehints->min_height = sizehints->max_height = WINH;
-    sizehints->flags |= (PMaxSize | PMinSize);
+    sizehints->min_width = sizehints->max_width = min_width;
+    sizehints->min_height = sizehints->max_height = min_height;
+    sizehints->flags |= PMinSize;
 
     sizehints->x = 0;
     sizehints->y = 0;
@@ -784,7 +763,10 @@ void open_window(int width, int height){
 
     XMapWindow(display, window);
     XRaiseWindow(display, window);
-    //XMoveWindow(display, window, swidth/2-width/2, sheight/2-height/2);
+    int scr = DefaultScreen(display);
+    int swidth = XDisplayWidth(display,scr);
+    int sheight = XDisplayHeight(display,scr);
+    XMoveWindow(display, window, swidth/2-min_width/2, sheight/2-min_height/2);
     Atom wm_delete_window = XInternAtom(display, "WM_DELETE_WINDOW", False);
     XSetWMProtocols(display, window, &wm_delete_window, 1);
 

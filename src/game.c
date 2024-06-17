@@ -90,5 +90,5 @@ int main(int argc, char **argv){
 	sponge.pixels = load_image(true,&sponge.width,&sponge.height,"res/screenshot.png");
 	t3d_set_texture(&sponge);
 	doodoo = load_audio(&doodooFrames,"res/frequency.mp3");
-    open_window(640,480);
+    open_window(SCREEN_WIDTH,SCREEN_HEIGHT);
 }

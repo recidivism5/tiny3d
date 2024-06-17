@@ -62,7 +62,7 @@ extern void keyup(int scancode);
 extern void mousemove(int x, int y);
 
 //utility functions:
-void open_window(int width, int height); //call this to start
+void open_window(int min_width, int min_height); //call this to start
 void toggle_fullscreen();
 bool is_mouse_locked(void);
 void lock_mouse(bool locked);
