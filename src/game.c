@@ -35,7 +35,9 @@ void keyup(int scancode){
 }
 
 void mousemove(int x, int y){
-	printf("%d %d\n",x,y);
+	int fx,fy;
+	get_framebuffer_pos(x,y,&fx,&fy);
+	printf("%d %d\n",fx,fy);
 }
 
 void tick(){
@@ -86,7 +88,7 @@ void update(double time, double deltaTime, int nAudioFrames, int16_t *audioSampl
 }
 
 void init(void){
-	toggle_fullscreen();
+	//toggle_fullscreen();
 }
 
 int main(int argc, char **argv){
@@ -94,5 +96,5 @@ int main(int argc, char **argv){
 	sponge.pixels = load_image(true,&sponge.width,&sponge.height,"res/screenshot.png");
 	t3d_set_texture(&sponge);
 	doodoo = load_audio(&doodooFrames,"res/frequency.mp3");
-    open_window(SCREEN_WIDTH,SCREEN_HEIGHT,"gerald's conundrum");
+    open_window(SCREEN_WIDTH*3,SCREEN_HEIGHT*3,"gerald's dilemma");
 }

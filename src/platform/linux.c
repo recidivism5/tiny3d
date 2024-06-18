@@ -937,7 +937,7 @@ void open_window(int min_width, int min_height, char *name){
                     case 1: keydown(KEY_MOUSE_LEFT); break;
                     case 3: keydown(KEY_MOUSE_RIGHT); break;
                 } break;
-                case MotionNotify: if (!is_mouse_locked()) mousemove(event.xmotion.x,window_height-event.xmotion.y); break;
+                case MotionNotify: if (!is_mouse_locked()) mousemove(event.xmotion.x,window_height-1-event.xmotion.y); break;
             }
         }
 

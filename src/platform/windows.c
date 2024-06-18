@@ -739,7 +739,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam){
         }
         case WM_MOUSEMOVE:{
             if (!mouse_locked){
-                mousemove(GET_X_LPARAM(lparam),GET_Y_LPARAM(lparam));
+                RECT cr;
+                GetClientRect(hwnd,&cr);
+                mousemove(GET_X_LPARAM(lparam),(cr.bottom-cr.top)-1-GET_Y_LPARAM(lparam));
             }
             return 0;
         }

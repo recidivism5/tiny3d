@@ -519,3 +519,17 @@ void draw_framebuffer(image_t *framebuffer, float r, float g, float b){
     glTexCoord2f(0,1); glVertex2f(-1,1);
     glEnd();
 }
+
+void get_framebuffer_pos(int x, int y, int *outx, int *outy){
+	int scale = 1;
+    while (framebuffer->width*scale <= window_width && framebuffer->height*scale <= window_height){
+        scale++;
+    }
+    scale--;
+    int scaledWidth = scale * framebuffer->width;
+    int scaledHeight = scale * framebuffer->height;
+    int fx = window_width/2-scaledWidth/2;
+    int fy = window_height/2-scaledHeight/2;
+	*outx = (x-fx)/scale;
+	*outy = (y-fy)/scale;
+}
