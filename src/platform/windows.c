@@ -789,7 +789,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam){
 
 void open_window(int min_width, int min_height, char *name){
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
-    int ncount = strlen(name)+1;
+    size_t ncount = strlen(name)+1;
     WCHAR *wname = malloc(ncount*sizeof(*wname));
     mbstowcs(wname,name,ncount);
     WNDCLASSEXW wcex = {
