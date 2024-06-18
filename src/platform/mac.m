@@ -519,7 +519,7 @@ MyOpenGLView* glView;
 		defer:NO];
 	[window setTitle:[NSString stringWithUTF8String:local_name]];
 	[window setAcceptsMouseMovedEvents:YES];
-	[window setMinSize:[window contentLayoutRect].size];
+	[window setContentMinSize:[window contentLayoutRect].size];
 
    // Create the OpenGL view
    NSOpenGLPixelFormatAttribute attrs[] = {
