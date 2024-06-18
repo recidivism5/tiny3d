@@ -110,7 +110,8 @@ void t3d_texcoord(float u, float v);
 
 //software rendering assistance:
 //draws a framebuffer with integer scaling as high as will fit, centered in the window
-void draw_framebuffer(image_t *framebuffer);
+//rgb is background color
+void draw_framebuffer(image_t *framebuffer, float r, float g, float b);
 
 #define COUNT(arr) (sizeof(arr)/sizeof(*arr))
 #define LERP(a,b,t) ((a) + (t)*((b)-(a)))

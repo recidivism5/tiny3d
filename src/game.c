@@ -82,7 +82,7 @@ void update(double time, double deltaTime, int nAudioFrames, int16_t *audioSampl
 	//text_set_color(1,1,1);
 	//text_draw(0,screen.width,0,screen.height,"jojfoil hat\nswagcoin");
 
-	draw_framebuffer((image_t *)&screen);
+	draw_framebuffer((image_t *)&screen,0,0,0);
 }
 
 void init(void){

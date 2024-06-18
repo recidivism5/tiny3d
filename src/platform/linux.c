@@ -2,6 +2,9 @@
 
 #include <X11/X.h>
 #include <X11/Xlib.h>
+#include <X11/XKBlib.h>
+#include <X11/extensions/XInput.h>
+#include <X11/extensions/XInput2.h>
 
 #include <GL/gl.h>
 #include <GL/glx.h>
@@ -15,6 +18,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#define __USE_POSIX199309
 #include <time.h>
 
 struct Dimensions{
@@ -657,8 +661,6 @@ void text_set_font_height(int height){}
 void text_set_color(float r, float g, float b){}
 void text_draw(int left, int right, int bottom, int top, char *str){}
 
-#include <X11/XKBlib.h>
-
 static XkbDescPtr kbdesc;
 static Display *display;
 static Window window;
@@ -696,6 +698,35 @@ void toggle_fullscreen(){
     xevent.xclient.data.l[3] = 0l;
     XSendEvent(display, RootWindow(display, DefaultScreen(display)), 0, SubstructureNotifyMask | SubstructureRedirectMask, &xevent);
     XFlush(display);
+}
+
+static void print_rawevent(XIRawEvent *event) {
+    int i;
+    int lasti = -1;
+    double *val;
+
+    printf("EVENT type %d ", event->evtype);
+    printf("device %d %d ", event->deviceid, event->sourceid);
+    printf("detail %d ", event->detail);
+    printf("valuators");
+
+    /* Get the index of the last valuator that is set */
+    for (i = 0; i < event->valuators.mask_len * 8; i++) {
+        if (XIMaskIsSet(event->valuators.mask, i)) {
+            lasti = i;
+        }
+    }
+
+    /* Print each valuator's value, nan if the valuator is not set. */
+    val = event->valuators.values;
+    for (i = 0; i <= lasti; i++) {
+        if (XIMaskIsSet(event->valuators.mask, i)) {
+            printf(" %.2f", *val++);
+        } else {
+            printf(" nan");
+        }
+    }
+    printf("\n");
 }
 
 void open_window(int min_width, int min_height, char *name){
@@ -799,12 +830,49 @@ void open_window(int min_width, int min_height, char *name){
     );
     ASSERT(stream);
 
+    int firstev, firsterr;
+    int xi_opcode = -1;
+    ASSERT(XQueryExtension(display, "XInputExtension", &xi_opcode, &firstev, &firsterr));
+    XIEventMask eventmask;
+    eventmask.deviceid = XIAllMasterDevices;
+    unsigned char mask[XIMaskLen(XI_LASTEVENT)];
+    memset(mask, 0, sizeof(mask));
+    XISetMask(mask, XI_RawKeyPress);
+    XISetMask(mask, XI_RawKeyRelease);
+    XISetMask(mask, XI_RawButtonPress);
+    XISetMask(mask, XI_RawButtonRelease);
+    XISetMask(mask, XI_RawMotion);
+    XISetMask(mask, XI_RawTouchBegin);
+    XISetMask(mask, XI_RawTouchUpdate);
+    XISetMask(mask, XI_RawTouchEnd);
+    eventmask.mask = mask;
+    eventmask.mask_len = sizeof(mask);
+    XISelectEvents(display, DefaultRootWindow(display), &eventmask, 1);
+    XEvent event;
+    XGenericEventCookie *cookie = &event.xcookie;
+
     init();
     
     while (1){
-        XEvent event;
         while (XPending(display)){
             XNextEvent(display, &event);
+            if (XGetEventData(display, cookie)) {
+                if (cookie->extension == xi_opcode && cookie->type == GenericEvent) {
+                    switch(cookie->evtype) {
+                        case XI_RawKeyPress:
+                        case XI_RawKeyRelease:
+                        case XI_RawButtonPress:
+                        case XI_RawButtonRelease:
+                        case XI_RawMotion:
+                        case XI_RawTouchBegin:
+                        case XI_RawTouchUpdate:
+                        case XI_RawTouchEnd:
+                            print_rawevent(cookie->data);
+                            break;
+                    }
+                }
+                XFreeEventData(display, cookie);
+            }
             switch (event.type){
                 case ClientMessage:{
                     if ((Atom)event.xclient.data.l[0] == wm_delete_window){
@@ -818,14 +886,7 @@ void open_window(int min_width, int min_height, char *name){
                     case 1: keydown(KEY_MOUSE_LEFT); break;
                     case 3: keydown(KEY_MOUSE_RIGHT); break;
                 } break;
-            }/*
-            if(event.type == KeyPress)
-            {
-                switch(XKeycodeToKeysym(display, event.xkey.keycode, 0))
-                {
-                    case XK_Escape: return;
-                }
-            }*/
+            }
         }
 
         XWindowAttributes attribs;

@@ -489,9 +489,9 @@ void t3d_texcoord(float u, float v){
 }
 
 // software rendering assistance:
-void draw_framebuffer(image_t *framebuffer){
+void draw_framebuffer(image_t *framebuffer, float r, float g, float b){
     glViewport(0,0,window_width,window_height);
-    glClearColor(0.0f,0.0f,1.0f,1.0f);
+    glClearColor(r,g,b,1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     static GLuint texture = 0;
     if (!texture){
