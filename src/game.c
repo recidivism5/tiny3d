@@ -25,7 +25,7 @@ void keydown(int scancode){
 		case KEY_MOUSE_LEFT: printf("click\n"); break;
 		case 1: exit(0); break;
 		case 33: toggle_fullscreen(); break;
-		case 'C': lock_mouse(!is_mouse_locked()); break;
+		case 'C': toggle_mouse_lock(); break;
 	}
 }
 
@@ -85,10 +85,14 @@ void update(double time, double deltaTime, int nAudioFrames, int16_t *audioSampl
 	draw_framebuffer((image_t *)&screen);
 }
 
+void init(void){
+	toggle_fullscreen();
+}
+
 int main(int argc, char **argv){
 	t3d_set_framebuffer(&screen);
 	sponge.pixels = load_image(true,&sponge.width,&sponge.height,"res/screenshot.png");
 	t3d_set_texture(&sponge);
 	doodoo = load_audio(&doodooFrames,"res/frequency.mp3");
-    open_window(SCREEN_WIDTH,SCREEN_HEIGHT);
+    open_window(SCREEN_WIDTH,SCREEN_HEIGHT,"gerald's conundrum");
 }

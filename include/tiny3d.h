@@ -56,16 +56,18 @@ typedef struct {
 extern int window_width, window_height; //updated automatically whenever the window size is changed
 
 //define these:
+extern void init(void); //called once after window+opengl context initialization, but before the first call to update
 extern void update(double time, double deltaTime, int nAudioFrames, int16_t *audioSamples);
 extern void keydown(int scancode);
 extern void keyup(int scancode);
 extern void mousemove(int x, int y);
 
 //utility functions:
-void open_window(int min_width, int min_height); //call this to start
+void open_window(int min_width, int min_height, char *name); //call this to start
+bool is_fullscreen();
 void toggle_fullscreen();
-bool is_mouse_locked(void);
-void lock_mouse(bool locked);
+bool is_mouse_locked();
+void toggle_mouse_lock();
 void error_box(char *msg);
 void fatal_error(char *format, ...);
 char *format_string(char *format, ...);

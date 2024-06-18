@@ -266,19 +266,19 @@ void error_box(char *msg){
    [alert release];
 }
 
-static bool mouse_is_locked = false;
+static bool mouse_locked = false;
 bool is_mouse_locked(void){
-	return mouse_is_locked;
+	return mouse_locked;
 }
-void lock_mouse(bool locked){
-	mouse_is_locked = locked;
-	if (locked){
-		[NSCursor hide];
-		CGAssociateMouseAndMouseCursorPosition(false);
-	} else {
+void toggle_mouse_lock(){
+	if (mouse_locked){
 		[NSCursor unhide];
 		CGAssociateMouseAndMouseCursorPosition(true);
+	} else {
+		[NSCursor hide];
+		CGAssociateMouseAndMouseCursorPosition(false);
 	}
+	mouse_locked = !mouse_locked;
 }
 
 static int keycode_to_scancode(int keycode){ //credit chatgpt
@@ -495,6 +495,7 @@ CVReturn displayLinkCallback(CVDisplayLinkRef displayLink, const CVTimeStamp *in
 }
 
 static int swidth, sheight;
+static char *local_name;
 
 NSWindow* window;
 MyOpenGLView* glView;
@@ -516,7 +517,7 @@ MyOpenGLView* glView;
 		styleMask:NSWindowStyleMaskTitled|NSWindowStyleMaskClosable|NSWindowStyleMaskMiniaturizable|NSWindowStyleMaskResizable
 		backing:NSBackingStoreBuffered
 		defer:NO];
-	[window setTitle:@"tiny3d"];
+	[window setTitle:[NSString stringWithUTF8String:local_name]];
 	[window setAcceptsMouseMovedEvents:YES];
 	[window setMinSize:[window contentLayoutRect].size];
 
@@ -550,13 +551,20 @@ MyOpenGLView* glView;
 
    //audio:
    fenster_audio_open(&audioState);
+
+   init();
 }
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)sender {
    return YES;
 }
 @end
 
+static bool fullscreen = false;
+bool is_fullscreen(){
+	return fullscreen;
+}
 void toggle_fullscreen(){
+	fullscreen = !fullscreen;
 	[window toggleFullScreen:nil];
 }
 
@@ -564,7 +572,8 @@ float get_dpi_scale(){
 	return window.screen.backingScaleFactor;
 }
 
-void open_window(int min_width, int min_height){
+void open_window(int min_width, int min_height, char *name){
+	local_name = name;
 	swidth = min_width;
 	sheight = min_height;
 	[NSAutoreleasePool new];

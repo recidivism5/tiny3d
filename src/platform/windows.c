@@ -570,20 +570,23 @@ void releaseMouse(){
 static int local_min_width, local_min_height;
 static RECT prev_rect;
 
-static bool mouse_is_locked = false;
+static bool mouse_locked = false;
 bool is_mouse_locked(void){
-	return mouse_is_locked;
+	return mouse_locked;
 }
-void lock_mouse(bool locked){
-	mouse_is_locked = locked;
-	if (locked){
-		captureMouse();
-	} else {
+void toggle_mouse_lock(){
+	if (mouse_locked){
         releaseMouse();
+	} else {
+		captureMouse();
 	}
+    mouse_locked = !mouse_locked;
 }
 
 static bool fullscreen = false;
+bool is_fullscreen(){
+    return fullscreen;
+}
 void toggle_fullscreen(){
     if (fullscreen){
         SetWindowLongPtr(gwnd, GWL_STYLE, WS_OVERLAPPEDWINDOW | WS_VISIBLE);
@@ -735,7 +738,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam){
             break;
         }
         case WM_MOUSEMOVE:{
-            if (!mouse_is_locked){
+            if (!mouse_locked){
                 mousemove(GET_X_LPARAM(lparam),GET_Y_LPARAM(lparam));
             }
             return 0;
@@ -745,7 +748,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam){
 			static RAWINPUT raw[sizeof(RAWINPUT)];
 			GetRawInputData((HRAWINPUT)lparam, RID_INPUT, raw, &size, sizeof(RAWINPUTHEADER));
             if (raw->header.dwType == RIM_TYPEMOUSE){
-                if (mouse_is_locked){
+                if (mouse_locked){
                     mousemove(raw->data.mouse.lLastX,raw->data.mouse.lLastY);
                 }
                 //cameraRotate(&cam, raw->data.mouse.lLastX,raw->data.mouse.lLastY, -0.002f);
@@ -784,8 +787,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam){
     return DefWindowProcW(hwnd, msg, wparam, lparam);
 }
 
-void open_window(int min_width, int min_height){
+void open_window(int min_width, int min_height, char *name){
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+    int ncount = strlen(name)+1;
+    WCHAR *wname = malloc(ncount*sizeof(*wname));
+    mbstowcs(wname,name,ncount);
     WNDCLASSEXW wcex = {
         .cbSize = sizeof(wcex),
         .style = CS_HREDRAW | CS_VREDRAW,
@@ -793,7 +799,7 @@ void open_window(int min_width, int min_height){
         .hInstance = GetModuleHandleW(0),
         .hIcon = LoadIconW(GetModuleHandleW(0),MAKEINTRESOURCEW(69)),
         .hCursor = LoadCursorW(0,IDC_ARROW),
-        .lpszClassName = L"tiny3d",
+        .lpszClassName = wname,
         .hIconSm = 0,
     };
     ASSERT(RegisterClassExW(&wcex));
@@ -815,6 +821,8 @@ void open_window(int min_width, int min_height){
         0, 0, wcex.hInstance, 0
     );
     ASSERT(gwnd);
+
+    init();
 
     MSG msg;
     while (GetMessageW(&msg,0,0,0)){

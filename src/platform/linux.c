@@ -337,9 +337,6 @@ uint64_t get_time(void){
     return (uint64_t) ts.tv_sec * 1000000000 + (uint64_t) ts.tv_nsec;
 }
 
-bool is_mouse_locked(void){}
-void lock_mouse(bool locked){}
-
 #include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
 #include <libswscale/swscale.h>
@@ -667,10 +664,21 @@ static Display *display;
 static Window window;
 static GLXContext context;
 
-static bool fullscreen = false;
-
 #define _NET_WM_STATE_REMOVE    0l
 #define _NET_WM_STATE_ADD       1l
+
+static bool mouse_locked = false;
+bool is_mouse_locked(void){
+    return mouse_locked;
+}
+void toggle_mouse_lock(){
+    
+}
+
+static bool fullscreen = false;
+bool is_fullscreen(){
+    return fullscreen;
+}
 
 void toggle_fullscreen(){
     fullscreen = !fullscreen;
@@ -690,7 +698,7 @@ void toggle_fullscreen(){
     XFlush(display);
 }
 
-void open_window(int min_width, int min_height){
+void open_window(int min_width, int min_height, char *name){
     display = XOpenDisplay(NULL);
 
     kbdesc = XkbGetMap(display, 0, XkbUseCoreKbd);
@@ -747,6 +755,8 @@ void open_window(int min_width, int min_height){
     Atom _NET_WM_WINDOW_TYPE_NORMAL = XInternAtom(display, "_NET_WM_WINDOW_TYPE_NORMAL", False);
     XChangeProperty(display, window, _NET_WM_WINDOW_TYPE, XA_ATOM, 32, PropModeReplace, (unsigned char *)&_NET_WM_WINDOW_TYPE_NORMAL, 1);
 
+    XStoreName(display, window, name);
+
     int visual_hints[] = {
         GLX_RGBA,
         GLX_DEPTH_SIZE, 24,
@@ -788,6 +798,8 @@ void open_window(int min_width, int min_height){
         NULL               // Ignore error code.
     );
     ASSERT(stream);
+
+    init();
     
     while (1){
         XEvent event;
