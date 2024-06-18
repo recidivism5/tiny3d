@@ -669,12 +669,62 @@ static GLXContext context;
 #define _NET_WM_STATE_REMOVE    0l
 #define _NET_WM_STATE_ADD       1l
 
+static bool cursor_visible = true;
+static void show_cursor(bool show){
+    if (!show && cursor_visible){
+        Pixmap pixmap;
+        XColor color;
+        Cursor invisibleCursor;
+        pixmap = XCreatePixmap(display, window, 1, 1, 1);
+        color.red = color.blue = color.green = 0;
+        invisibleCursor = XCreatePixmapCursor(display, pixmap, pixmap, &color, &color, 0, 0);
+        XDefineCursor(display, window, invisibleCursor);
+        cursor_visible = false;
+    } else if (show && !cursor_visible){
+        XUndefineCursor(display, window);
+        cursor_visible = true;
+    }
+}
+
+static void warp_cursor(int x, int y){
+    show_cursor(false);
+    //XWarpPointer(display, None, window, 0, 0, 0, 0, x, y);
+    int deviceid;
+    XIGetClientPointer(display, None, &deviceid);
+    XIWarpPointer(display, deviceid, None, window, 0.0, 0.0, 0, 0, x, y);
+    show_cursor(true);
+}
+
+static void warp_cursor_to_center(){
+    int x, y;
+    unsigned int width, height;
+    unsigned int border_width;
+    unsigned int depth;
+    Window root;
+    Status status = XGetGeometry(display, window, &root, &x, &y, &width, &height,
+                                 &border_width, &depth);
+    warp_cursor(x+width/2,y+height/2);
+}
+
 static bool mouse_locked = false;
 bool is_mouse_locked(void){
     return mouse_locked;
 }
 void toggle_mouse_lock(){
-    
+    if (!mouse_locked){
+        Pixmap pixmap;
+        XColor color;
+        Cursor invisibleCursor;
+        pixmap = XCreatePixmap(display, window, 1, 1, 1);
+        color.red = color.blue = color.green = 0;
+        invisibleCursor = XCreatePixmapCursor(display, pixmap, pixmap, &color, &color, 0, 0);
+        XGrabPointer(display, window, True, 0, GrabModeAsync, GrabModeAsync, window, invisibleCursor, CurrentTime);
+        XFreeCursor(display, invisibleCursor);
+        XFreePixmap(display, pixmap);
+    } else {
+        XUngrabPointer(display, CurrentTime);
+    }
+    mouse_locked = !mouse_locked;
 }
 
 static bool fullscreen = false;
@@ -847,27 +897,28 @@ void open_window(int min_width, int min_height, char *name){
     XISetMask(mask, XI_RawTouchEnd);
     eventmask.mask = mask;
     eventmask.mask_len = sizeof(mask);
-    XISelectEvents(display, DefaultRootWindow(display), &eventmask, 1);
+    //XISelectEvents(display, DefaultRootWindow(display), &eventmask, 1);
     XEvent event;
     XGenericEventCookie *cookie = &event.xcookie;
 
     init();
     
     while (1){
+        XWindowAttributes attribs;
+        XGetWindowAttributes(display, window, &attribs);
+        window_width = attribs.width;
+        window_height = attribs.height;
+
         while (XPending(display)){
             XNextEvent(display, &event);
-            if (XGetEventData(display, cookie)) {
-                if (cookie->extension == xi_opcode && cookie->type == GenericEvent) {
-                    switch(cookie->evtype) {
-                        case XI_RawKeyPress:
-                        case XI_RawKeyRelease:
-                        case XI_RawButtonPress:
-                        case XI_RawButtonRelease:
+            if (XGetEventData(display, cookie)){
+                if (cookie->extension == xi_opcode && cookie->type == GenericEvent){
+                    switch(cookie->evtype){
                         case XI_RawMotion:
-                        case XI_RawTouchBegin:
-                        case XI_RawTouchUpdate:
-                        case XI_RawTouchEnd:
-                            print_rawevent(cookie->data);
+                            if (is_mouse_locked()){
+                                XIRawEvent *re = (XIRawEvent *)cookie->data;
+                                mousemove(re->valuators.values[0],re->valuators.values[1]);
+                            }
                             break;
                     }
                 }
@@ -886,13 +937,9 @@ void open_window(int min_width, int min_height, char *name){
                     case 1: keydown(KEY_MOUSE_LEFT); break;
                     case 3: keydown(KEY_MOUSE_RIGHT); break;
                 } break;
+                case MotionNotify: if (!is_mouse_locked()) mousemove(event.xmotion.x,window_height-event.xmotion.y); break;
             }
         }
-
-        XWindowAttributes attribs;
-        XGetWindowAttributes(display, window, &attribs);
-        window_width = attribs.width;
-        window_height = attribs.height;
 
         static uint64_t tstart, t0, t1;
         static int timeSet = 0;

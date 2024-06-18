@@ -25,7 +25,7 @@ void keydown(int scancode){
 		case KEY_MOUSE_LEFT: printf("click\n"); break;
 		case 1: exit(0); break;
 		case 33: toggle_fullscreen(); break;
-		case 'C': toggle_mouse_lock(); break;
+		case 46: toggle_mouse_lock(); break;
 	}
 }
 
@@ -35,7 +35,7 @@ void keyup(int scancode){
 }
 
 void mousemove(int x, int y){
-	
+	printf("%d %d\n",x,y);
 }
 
 void tick(){
