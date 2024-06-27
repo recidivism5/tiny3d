@@ -490,11 +490,7 @@ static void text_update_font(){
         DeleteObject(old);
     }
 }
-void text_set_font(char *ttfPathFormat, ...){
-    va_list args;
-	va_start(args,ttfPathFormat);
-	char *path = local_path_to_absolute_vararg(ttfPathFormat,args);
-	va_end(args);
+void text_set_font(char *path){
     ASSERT(1 == AddFontResourceExA(path,FR_PRIVATE,NULL));
     get_font_name(path,gdiImg.fontName,COUNT(gdiImg.fontName));
     text_update_font();

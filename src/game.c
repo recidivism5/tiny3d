@@ -100,6 +100,6 @@ int main(int argc, char **argv){
 	sponge.pixels = load_image(true,&sponge.width,&sponge.height,"res/screenshot.png");
 	t3d_set_texture(&sponge);
 	doodoo = load_audio(&doodooFrames,"res/frequency.mp3");
-	text_set_font("VanillaExtractRegular.ttf");
+	text_set_font("res/VanillaExtractRegular.ttf");
     open_window(SCREEN_WIDTH,SCREEN_HEIGHT,"gerald's dilemma");
 }

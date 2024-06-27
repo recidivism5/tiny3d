@@ -81,11 +81,11 @@ int16_t *load_audio(int *nFrames, char *format, ...);
 wchar_t *get_keyboard_layout_name();
 void get_key_text(int scancode, wchar_t *buf, int bufcount);
 float get_dpi_scale();
+void get_font_name(char *path, char *out, int outCount);
 
 //text:
-void get_font_name(char *path, char *out, int outCount);
 void text_set_target_image(uint32_t *pixels, int width, int height);
-void text_set_font(char *ttfPathFormat, ...);
+void text_set_font(char *path);
 void text_set_font_height(int height);
 void text_set_color(float r, float g, float b);
 void text_get_bounds(char *str, int *width, int *height);
