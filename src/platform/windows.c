@@ -506,7 +506,13 @@ void text_set_font_height(int height){
 void text_set_color(float r, float g, float b){
     SetTextColor(gdiImg.hdcBmp,RGB((int)(255*r),(int)(255*g),(int)(255*b)));
 }
-void text_draw(int left, int right, int bottom, int top, char *str){
+void text_get_bounds(char *str, int *width, int *height){
+    RECT r;
+    DrawTextA(gdiImg.hdcBmp,str,-1,&r,DT_LEFT|DT_NOPREFIX|DT_EXPANDTABS|DT_CALCRECT);
+    *width = r.right-r.left;
+    *height = r.bottom-r.top;
+}
+void text_draw(int x, int y, char *str){
     BITMAPINFO_TRUECOLOR32 bmi = {
 		.bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
 		.bmiHeader.biWidth = gdiImg.width,
@@ -529,13 +535,7 @@ void text_draw(int left, int right, int bottom, int top, char *str){
     }
 	hbmOld = SelectObject(gdiImg.hdcBmp,hbm);
 
-    RECT r = {
-        .left = left,
-        .right = right,
-        .bottom = gdiImg.height-bottom,
-        .top = gdiImg.height-top
-    };
-    DrawTextA(gdiImg.hdcBmp,str,-1,&r,DT_LEFT|DT_NOPREFIX|DT_EXPANDTABS);
+    ExtTextOutA(gdiImg.hdcBmp,x,gdiImg.height-1-y,0,0,str,strlen(str),0);
     GdiFlush();
 
     for (size_t i = 0; i < gdiImg.width*gdiImg.height; i++){
