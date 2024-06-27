@@ -217,25 +217,19 @@ void text_get_bounds(char *str, int *width, int *height){
 	);
 	CGContextSetInterpolationQuality(ctx,kCGInterpolationNone);
 	
-	printf("getting %s\n",local_path_to_absolute(cgImg.fontPath));
-	if (![NSURL URLWithString:[NSString stringWithUTF8String:local_path_to_absolute(cgImg.fontPath)]]){
-		puts("joj");
-	}
-    CGDataProviderRef fontDataProvider = CGDataProviderCreateWithURL((__bridge CFURLRef)[NSURL URLWithString:[NSString stringWithUTF8String:local_path_to_absolute(cgImg.fontPath)]]);
-    if (!fontDataProvider) {
-        NSLog(@"Error: Failed to create data provider.");
-        return ;
-    }
-	CGFontRef cgFont = CGFontCreateWithDataProvider(fontDataProvider);
-    CTFontRef ctFont = CTFontCreateWithGraphicsFont(cgFont, (float)cgImg.fontHeight, NULL, NULL);
+	CFURLRef url = CFURLCreateWithFileSystemPath(kCFAllocatorDefault, CFSTR(local_path_to_absolute(cgImg.fontPath)), kCFURLPOSIXPathStyle, false);
+	CGDataProviderRef dataProvider = CGDataProviderCreateWithURL(url);
+	CGFontRef cgFont = CGFontCreateWithDataProvider(dataProvider);
+	CTFontRef ctFont = CTFontCreateWithGraphicsFont(cgFont);
 	NSDictionary* attributes = [NSDictionary dictionaryWithObjectsAndKeys:
                             (id)ctFont, NSFontAttributeName,
                             [NSColor colorWithCalibratedRed:cgImg.r green:cgImg.g blue:cgImg.b alpha:1.0f], NSForegroundColorAttributeName,
                             nil];
 	NSAttributedString* as = [[NSAttributedString alloc] initWithString:[NSString stringWithUTF8String:str] attributes:attributes];
-	CFRelease(cgFont);
-    CFRelease(fontDataProvider);
 	CFRelease(ctFont);
+	CFRelease(cgFont);
+	CFRelease(dataProvider);
+	CFRelease(url);
 
 	CGContextSetTextMatrix(ctx, CGAffineTransformIdentity);
 	CGContextTranslateCTM(ctx, 0, cgImg.height);
@@ -264,17 +258,19 @@ void text_draw(int x, int y, char *str){
 	);
 	CGContextSetInterpolationQuality(ctx,kCGInterpolationNone);
 	
-	CGDataProviderRef fontDataProvider = CGDataProviderCreateWithURL((__bridge CFURLRef)[NSURL URLWithString:[NSString stringWithUTF8String:local_path_to_absolute(cgImg.fontPath)]]);
-    CGFontRef cgFont = CGFontCreateWithDataProvider(fontDataProvider);
-    CTFontRef ctFont = CTFontCreateWithGraphicsFont(cgFont, (float)cgImg.fontHeight, NULL, NULL);
+	CFURLRef url = CFURLCreateWithFileSystemPath(kCFAllocatorDefault, CFSTR(local_path_to_absolute(cgImg.fontPath)), kCFURLPOSIXPathStyle, false);
+	CGDataProviderRef dataProvider = CGDataProviderCreateWithURL(url);
+	CGFontRef cgFont = CGFontCreateWithDataProvider(dataProvider);
+	CTFontRef ctFont = CTFontCreateWithGraphicsFont(cgFont);
 	NSDictionary* attributes = [NSDictionary dictionaryWithObjectsAndKeys:
                             (id)ctFont, NSFontAttributeName,
                             [NSColor colorWithCalibratedRed:cgImg.r green:cgImg.g blue:cgImg.b alpha:1.0f], NSForegroundColorAttributeName,
                             nil];
 	NSAttributedString* as = [[NSAttributedString alloc] initWithString:[NSString stringWithUTF8String:str] attributes:attributes];
-	CFRelease(cgFont);
-    CFRelease(fontDataProvider);
 	CFRelease(ctFont);
+	CFRelease(cgFont);
+	CFRelease(dataProvider);
+	CFRelease(url);
 
 	CGContextSetTextMatrix(ctx, CGAffineTransformIdentity);
 	CGContextTranslateCTM(ctx, 0, cgImg.height);
