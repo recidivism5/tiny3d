@@ -201,7 +201,7 @@ void text_set_color(float r, float g, float b){
 	cgImg.g = g;
 	cgImg.b = b;
 }
-void text_draw(int left, int right, int bottom, int top, char *str){
+void text_get_bounds(char *str, int *width, int *height){
 	CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceGenericRGB);
     CGContextRef ctx = CGBitmapContextCreate(
 		cgImg.pixels,
@@ -221,21 +221,50 @@ void text_draw(int left, int right, int bottom, int top, char *str){
                             nil];
 	NSAttributedString* as = [[NSAttributedString alloc] initWithString:[NSString stringWithUTF8String:str] attributes:attributes];
 	CFRelease(font);
-	CTFramesetterRef framesetter = CTFramesetterCreateWithAttributedString((CFAttributedStringRef)as);
-	CGRect rect = CGRectMake(left, bottom, right-left, top-bottom);
-	CGPathRef path = CGPathCreateWithRect(rect, NULL);
-	CTFrameRef frame = CTFramesetterCreateFrame(framesetter, CFRangeMake(0, 0), path, NULL);
-	//CGContextSetRGBFillColor(ctx, 1.0, 1.0, 1.0, 1.0);
-	//CGContextFillRect(ctx, CGRectMake(0.0, 0.0, cgImg.width, cgImg.height));
+
 	CGContextSetTextMatrix(ctx, CGAffineTransformIdentity);
 	CGContextTranslateCTM(ctx, 0, cgImg.height);
 	CGContextScaleCTM(ctx, 1.0, -1.0);
-	//CGContextSetTextPosition(ctx, 0, -14);
-	CTFrameDraw(frame,ctx);
+	
+	CTLineRef line = CTLineCreateWithAttributedString((CFAttributedStringRef)as);
+	CGFloat ascent, descent, leading;
+	CGFloat w = CTLineGetTypographicBounds(line, &ascent, &descent, &leading);
+	*width = (int)w;
+	*height = (int)(ascent+descent);
+	CFRelease(line);
 
-	CFRelease(frame);
-	CFRelease(framesetter);
-	CGPathRelease(path);
+	CGContextRelease(ctx);
+    CGColorSpaceRelease(colorSpace);
+}
+void text_draw(int x, int y, char *str){
+	CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceGenericRGB);
+    CGContextRef ctx = CGBitmapContextCreate(
+		cgImg.pixels,
+		cgImg.width,
+		cgImg.height,
+		8,
+		(cgImg.width)*sizeof(*cgImg.pixels),
+		colorSpace,
+		kCGImageAlphaPremultipliedLast
+	);
+	CGContextSetInterpolationQuality(ctx,kCGInterpolationNone);
+	
+	CTFontRef font = CTFontCreateWithName(CFSTR("Comic Sans MS"), (float)cgImg.fontHeight, nil);
+	NSDictionary* attributes = [NSDictionary dictionaryWithObjectsAndKeys:
+                            (id)font, NSFontAttributeName,
+                            [NSColor colorWithCalibratedRed:cgImg.r green:cgImg.g blue:cgImg.b alpha:1.0f], NSForegroundColorAttributeName,
+                            nil];
+	NSAttributedString* as = [[NSAttributedString alloc] initWithString:[NSString stringWithUTF8String:str] attributes:attributes];
+	CFRelease(font);
+
+	CGContextSetTextMatrix(ctx, CGAffineTransformIdentity);
+	CGContextTranslateCTM(ctx, 0, cgImg.height);
+	CGContextScaleCTM(ctx, 1.0, -1.0);
+	
+	CTLineRef line = CTLineCreateWithAttributedString((CFAttributedStringRef)as);
+	CGContextSetTextPosition(ctx, x, y);
+	CTLineDraw(line, ctx);
+	CFRelease(line);
 
 	CGContextRelease(ctx);
     CGColorSpaceRelease(colorSpace);
@@ -435,7 +464,7 @@ static int keycode_to_scancode(int keycode){ //credit chatgpt
 }
 
 - (void)mouseMoved:(NSEvent*) event {
-	if (mouse_is_locked){
+	if (mouse_locked){
 		mousemove([event deltaX],[event deltaY]);
 	} else {
 		NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
@@ -445,12 +474,12 @@ static int keycode_to_scancode(int keycode){ //credit chatgpt
 
 - (void) mouseDragged: (NSEvent*) event {
 	NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
-	NSLog(@"Mouse pos: %lf, %lf", point.x, point.y);
+	//NSLog(@"Mouse pos: %lf, %lf", point.x, point.y);
 }
 
 - (void)scrollWheel: (NSEvent*) event  {
 	NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
-	NSLog(@"Mouse wheel at: %lf, %lf. Delta: %lf", point.x, point.y, [event deltaY]);
+	//NSLog(@"Mouse wheel at: %lf, %lf. Delta: %lf", point.x, point.y, [event deltaY]);
 }
 
 - (void) mouseDown: (NSEvent*) event {

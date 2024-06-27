@@ -88,7 +88,8 @@ void text_set_target_image(uint32_t *pixels, int width, int height);
 void text_set_font(char *ttfPathFormat, ...);
 void text_set_font_height(int height);
 void text_set_color(float r, float g, float b);
-void text_draw(int left, int right, int bottom, int top, char *str);
+void text_get_bounds(char *str, int *width, int *height);
+void text_draw(int x, int y, char *str);
 
 //2d:
 void t2d_set_source_image(image_t *img);

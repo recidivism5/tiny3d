@@ -7,8 +7,8 @@ double interpolant;
 
 float mouse_sensitivity = 0.1f;
 
-#define SCREEN_WIDTH 256
-#define SCREEN_HEIGHT 192
+#define SCREEN_WIDTH 512/2
+#define SCREEN_HEIGHT 512/2
 color_t screen_pixels[SCREEN_WIDTH*SCREEN_HEIGHT];
 float screen_depth[SCREEN_WIDTH*SCREEN_HEIGHT];
 framebuffer_t screen = {
@@ -60,8 +60,8 @@ void update(double time, double deltaTime, int nAudioFrames, int16_t *audioSampl
 		if (curFrame >= doodooFrames){
 			curFrame = 0;
 		}
-		audioSamples[i*2] = doodoo[curFrame*2];
-		audioSamples[i*2+1] = doodoo[curFrame*2+1];
+		//audioSamples[i*2] = doodoo[curFrame*2];
+		//audioSamples[i*2+1] = doodoo[curFrame*2+1];
 		curFrame++;
 	}
 
@@ -80,9 +80,13 @@ void update(double time, double deltaTime, int nAudioFrames, int16_t *audioSampl
 	t3d_position(0,1,0); t3d_texcoord(0,1);
 	t3d_position(0,0,0); t3d_texcoord(0,0);
 
-	//text_set_target_image(screen.pixels,screen.width,screen.height);
-	//text_set_color(1,1,1);
-	//text_draw(0,screen.width,0,screen.height,"jojfoil hat\nswagcoin");
+	text_set_target_image(screen.pixels,screen.width,screen.height);
+	text_set_font_height(48);
+	text_set_color(1,1,1);
+	int w,h;
+	char *str = "jojfoil hat\nswagcoin";
+	text_get_bounds(str,&w,&h);
+	text_draw(SCREEN_WIDTH/2-w/2,SCREEN_HEIGHT/2,str);
 
 	draw_framebuffer((image_t *)&screen,0,0,0);
 }
@@ -96,5 +100,5 @@ int main(int argc, char **argv){
 	sponge.pixels = load_image(true,&sponge.width,&sponge.height,"res/screenshot.png");
 	t3d_set_texture(&sponge);
 	doodoo = load_audio(&doodooFrames,"res/frequency.mp3");
-    open_window(SCREEN_WIDTH*3,SCREEN_HEIGHT*3,"gerald's dilemma");
+    open_window(SCREEN_WIDTH,SCREEN_HEIGHT,"gerald's dilemma");
 }
