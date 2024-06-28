@@ -69,7 +69,7 @@ elseif(UNIX)
 	include_directories(${CAIRO_INCLUDE_DIRS} ${PANGO_INCLUDE_DIRS})
 	link_directories(${CAIRO_LIBRARY_DIRS} ${PANGO_LIBRARY_DIRS})
 	target_sources(${PROJECT_NAME} PRIVATE src/platform/linux.c)
-	target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} m X11 Xi pulse pulse-simple avformat avcodec avutil swscale swresample ${CAIRO_LIBRARIES} ${PANGO_LIBRARIES})
+	target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} m X11 Xi pulse pulse-simple avformat avcodec avutil swscale swresample ${CAIRO_LIBRARIES} ${PANGO_LIBRARIES} fontconfig)
 endif()
 
 #https://stackoverflow.com/questions/7747857/in-cmake-how-do-i-work-around-the-debug-and-release-directories-visual-studio-2

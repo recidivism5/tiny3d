@@ -60,8 +60,8 @@ void update(double time, double deltaTime, int nAudioFrames, int16_t *audioSampl
 		if (curFrame >= doodooFrames){
 			curFrame = 0;
 		}
-		//audioSamples[i*2] = doodoo[curFrame*2];
-		//audioSamples[i*2+1] = doodoo[curFrame*2+1];
+		audioSamples[i*2] = doodoo[curFrame*2];
+		audioSamples[i*2+1] = doodoo[curFrame*2+1];
 		curFrame++;
 	}
 
@@ -81,12 +81,11 @@ void update(double time, double deltaTime, int nAudioFrames, int16_t *audioSampl
 	t3d_position(0,0,0); t3d_texcoord(0,0);
 
 	text_set_target_image(screen.pixels,screen.width,screen.height);
-	text_set_font_height(24);
 	text_set_color(1,1,0);
 	int w,h;
 	char *str = "jojfoil hat swagcoin";
 	text_get_bounds(str,&w,&h);
-	text_draw(SCREEN_WIDTH/2-w/2,SCREEN_HEIGHT/2+h/2,str);
+	text_draw(256-w/2,SCREEN_HEIGHT/2+h/2,str);
 
 	draw_framebuffer((image_t *)&screen,0,0,0);
 }
@@ -100,6 +99,9 @@ int main(int argc, char **argv){
 	sponge.pixels = load_image(true,&sponge.width,&sponge.height,"res/screenshot.png");
 	t3d_set_texture(&sponge);
 	doodoo = load_audio(&doodooFrames,"res/frequency.mp3");
-	text_set_font("res/VanillaExtractRegular.ttf");
+	register_font(local_path_to_absolute("res/VanillaExtractRegular.ttf"));
+	char fname[256];
+	get_font_name(local_path_to_absolute("res/VanillaExtractRegular.ttf"),fname,sizeof(fname));
+	text_set_font(fname,24);
     open_window(SCREEN_WIDTH,SCREEN_HEIGHT,"gerald's dilemma");
 }

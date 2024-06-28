@@ -84,9 +84,9 @@ float get_dpi_scale();
 void get_font_name(char *path, char *out, int outCount);
 
 //text:
-void text_set_target_image(uint32_t *pixels, int width, int height);
-void text_set_font(char *path);
-void text_set_font_height(int height);
+void register_font(char *path);
+void text_set_font(char *font_family, int size);
+void text_set_target_image(unsigned char *pixels, int width, int height);
 void text_set_color(float r, float g, float b);
 void text_get_bounds(char *str, int *width, int *height);
 void text_draw(int x, int y, char *str);

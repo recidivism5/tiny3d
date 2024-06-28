@@ -656,22 +656,30 @@ int16_t *load_audio(int *nFrames, char *format, ...){
 #include <pulse/simple.h>
 
 #include <pango/pangocairo.h>
+#include <fontconfig/fontconfig.h>
 static struct {
     unsigned char *pixels;
     int width, height;
     float r,g,b;
-} text_img;
-void text_set_target_image(uint32_t *pixels, int width, int height){
-    text_img.pixels = pixels;
-    text_img.width = width;
-    text_img.height = height;
+    char *font_family;
+    int font_size;
+} text_ctx;
+void register_font(char *path){
+    ASSERT(FcConfigAppFontAddFile(FcConfigGetCurrent(),path));
 }
-void text_set_font(char *path){}
-void text_set_font_height(int height){}
+void text_set_target_image(unsigned char *pixels, int width, int height){
+    text_ctx.pixels = pixels;
+    text_ctx.width = width;
+    text_ctx.height = height;
+}
+void text_set_font(char *font_family, int size){
+    text_ctx.font_family = font_family;
+    text_ctx.font_size = size;
+}
 void text_set_color(float r, float g, float b){
-    text_img.r = r;
-    text_img.g = g;
-    text_img.b = b;
+    text_ctx.r = r;
+    text_ctx.g = g;
+    text_ctx.b = b;
 }
 void text_get_bounds(char *str, int *width, int *height){
     cairo_surface_t *surface;
@@ -680,28 +688,30 @@ void text_get_bounds(char *str, int *width, int *height){
     PangoFontDescription *desc;
 
     // Create a Cairo image surface for RGBA
-    surface = cairo_image_surface_create_for_data((unsigned char *)text_img.pixels,
+    surface = cairo_image_surface_create_for_data((unsigned char *)text_ctx.pixels,
                                                   CAIRO_FORMAT_ARGB32,
-                                                  text_img.width, text_img.height,
-                                                  cairo_format_stride_for_width(CAIRO_FORMAT_ARGB32, text_img.width));
+                                                  text_ctx.width, text_ctx.height,
+                                                  cairo_format_stride_for_width(CAIRO_FORMAT_ARGB32, text_ctx.width));
     cr = cairo_create(surface);
 
     // Flip the context upside down (treat bitmap as bottom-up)
-    cairo_translate(cr, 0, text_img.height);
+    cairo_translate(cr, 0, text_ctx.height);
     cairo_scale(cr, 1, -1);
 
     // Create a Pango layout
     layout = pango_cairo_create_layout(cr);
 
     // Set the font description
-    desc = pango_font_description_from_string("Sans Bold 12");
+    char ff[256];
+    snprintf(ff,sizeof(ff),"%s %d",text_ctx.font_family,text_ctx.font_size);
+    desc = pango_font_description_from_string(ff);
     pango_layout_set_font_description(layout, desc);
     pango_font_description_free(desc);
 
     // Set text and attributes
     pango_layout_set_text(layout, str, -1);
 
-    cairo_set_source_rgba(cr, text_img.r,text_img.g,text_img.b, 1.0);
+    cairo_set_source_rgba(cr, text_ctx.b,text_ctx.g,text_ctx.r, 1.0);
 
     PangoRectangle logical_rect;
     pango_layout_get_pixel_extents(layout, NULL, &logical_rect);
@@ -720,31 +730,33 @@ void text_draw(int x, int y, char *str){
     PangoFontDescription *desc;
 
     // Create a Cairo image surface for RGBA
-    surface = cairo_image_surface_create_for_data((unsigned char *)text_img.pixels,
+    surface = cairo_image_surface_create_for_data((unsigned char *)text_ctx.pixels,
                                                   CAIRO_FORMAT_ARGB32,
-                                                  text_img.width, text_img.height,
-                                                  cairo_format_stride_for_width(CAIRO_FORMAT_ARGB32, text_img.width));
+                                                  text_ctx.width, text_ctx.height,
+                                                  cairo_format_stride_for_width(CAIRO_FORMAT_ARGB32, text_ctx.width));
     cr = cairo_create(surface);
 
     // Flip the context upside down (treat bitmap as bottom-up)
-    cairo_translate(cr, 0, text_img.height);
+    cairo_translate(cr, 0, text_ctx.height);
     cairo_scale(cr, 1, -1);
 
     // Create a Pango layout
     layout = pango_cairo_create_layout(cr);
 
     // Set the font description
-    desc = pango_font_description_from_string("Sans Bold 12");
+    char ff[256];
+    snprintf(ff,sizeof(ff),"%s %d",text_ctx.font_family,text_ctx.font_size);
+    desc = pango_font_description_from_string(ff);
     pango_layout_set_font_description(layout, desc);
     pango_font_description_free(desc);
 
     // Set text and attributes
     pango_layout_set_text(layout, str, -1);
 
-    cairo_move_to(cr, x, text_img.height-y);
+    cairo_move_to(cr, x, text_ctx.height-y);
 
     // Render the layout onto the Cairo surface
-    cairo_set_source_rgba(cr, text_img.r,text_img.g,text_img.b, 1.0);
+    cairo_set_source_rgba(cr, text_ctx.b,text_ctx.g,text_ctx.r, 1.0);
     pango_cairo_show_layout(cr, layout);
 
     // Clean up
