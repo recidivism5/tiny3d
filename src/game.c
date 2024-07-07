@@ -17,31 +17,166 @@ framebuffer_t screen = {
 	.pixels = screen_pixels,
 	.depth = screen_depth
 };
+image_t paddle, ball;
+float pv = 0.0f;
+vec2 pp, pc = {SCREEN_WIDTH-84,20},
+bp, bc, bv;
 
-image_t sponge;
+char *text[] = {
+	"      ",
+	"Hi.",
+	"My name is Ian Bryant.",
+	"I am the creator of tiny3d.",
+	"Recently gone through a",
+	"period of great brainfog.",
+	"About to come back and",
+	"really swag on the competition",
+	"such as GLFW and SDL.",
+	"Press F to toggle fullscreen.",
+	"Get comfortable.",
+	"You're in for a long story.",
+	"But first,",
+	"Raven67854 wants a game.",
+	"...",
+	"Ok.",
+	"   ",
+	"Press space to move.",
+	"Keep the ball on screen.",
+	"..."
+	"Or else.",
+	"          ",
+	"I never should've fucked with that gluten shit.",
+	"Nvm lied about the long story.",
+	"Too tired to write that shit.",
+	"Been f'ing with my diet too much.",
+	"It feels like it's all I think about",
+	"these days...",
+	"Trying to figure things out.",
+	"I've gone down a lot of rabbit holes.",
+	"Someone should take the source code",
+	"and add a second ball at 5O points.",
+	"Make it green.",
+	"Funny enough...",
+	"this typewriter font lacks characters",
+	"for zero and one. So I have to iterate",
+	"through the score string to replace",
+	"them with uppercase O and lowercase l.",
+	"Just like a real typewriter I guess.",
+	"Shoutout to Marc.",
+	"sorry I didn't detect",
+	"your keyboard yet.",
+	"I forgot what F is on AZERTY.",
+};
+
+char scratch[256];
+int si = 16, ti = 0;
+int score;
+
+bool playing = false;
+bool dead = false;
+bool ball_dropped = false;
+bool move;
+int count = 0;
+bool advance = true;
+
+void reset(){
+	bc[0] = SCREEN_WIDTH/2-11;
+	bc[1] = (SCREEN_HEIGHT/5)*3;
+	memcpy(bp,bc,sizeof(bc));
+	bv[0] = 0;
+	bv[1] = 0;
+	ball_dropped = false;
+	advance = true;
+	score = 0;
+}
 
 void keydown(int scancode){
 	switch (scancode){
-		case KEY_MOUSE_LEFT: printf("click\n"); break;
-		case 1: exit(0); break;
-		case 33: toggle_fullscreen(); break;
-		case 46: toggle_mouse_lock(); break;
+		case US_SCANCODE_ESC: exit(0); break;
+		case US_SCANCODE_F: toggle_fullscreen(); toggle_mouse_lock(); break;
+		case US_SCANCODE_R: if (dead){dead = false; playing = false; si = 16; ti = 0; count = 0; reset();} break;
+		case US_SCANCODE_SPACE: move = true; break;
 	}
 }
 
 void keyup(int scancode){
 	switch (scancode){
+		case US_SCANCODE_SPACE: move = false; break;
 	}
 }
 
 void mousemove(int x, int y){
 	int fx,fy;
 	get_framebuffer_pos(x,y,&fx,&fy);
-	printf("%d %d\n",fx,fy);
 }
 
 void tick(){
-	
+	if (advance){
+		count++;
+		if (count == 0){
+			ti = 0;
+			si++;
+			if (si == 17){
+				playing = true;
+				reset();
+			}
+			if (si == 20){
+				ball_dropped = true;
+			}
+			if (si >= COUNT(text)){
+				si = 0;
+				advance = false;
+			}
+		}
+		if (count == 1){
+			count = 0;
+			ti++;
+			if (ti > strlen(text[si])){
+				ti--;
+				count = -10;
+			}
+		}
+	}
+
+	if (playing){
+		float mv = 30.0f;
+		float ls = 0.2f;
+		if (move){
+			pv = LERP(pv,-mv,ls);
+		} else {
+			pv = LERP(pv,mv,ls);
+		}
+		vec2_copy(pc,pp);
+		pc[0] = pp[0] + pv;
+		if (pc[0] <= 0){
+			pc[0] = 0;
+			pv = 0;
+		} else if (pc[0] >= (SCREEN_WIDTH-84)){
+			pc[0] = SCREEN_WIDTH-84;
+			pv = 0;
+		}
+		if (ball_dropped){
+			bv[1] -= 0.8f;
+			vec2_copy(bc,bp);
+			vec2_add(bc,bv,bc);
+			float t = (pp[1]+paddle.height - bp[1]) / bv[1];
+			if (t > 0.0f && t < 1.0f){
+				float ipx = LERP(pp[0],pc[0],t);
+				float ibx = LERP(bp[0],bc[0],t);
+				float iby = LERP(bp[1],bc[1],t);
+				if (ibx > (ipx-ball.width) && ibx < (ipx+paddle.width)){
+					score++;
+					bv[1] = 18.4f;
+					bv[0] = 0.06f*((ibx+0.5f*ball.width) - (ipx + 0.5f*paddle.width));
+					bc[0] = ibx;
+					bc[1] = iby;
+				}
+			}
+			if (bc[0] < -ball.width || bc[0] > SCREEN_WIDTH || bc[1] < -ball.height){
+				dead = true;
+			}
+		}
+	}
 }
 
 int16_t *doodoo;
@@ -62,32 +197,54 @@ void update(double time, double deltaTime, int nAudioFrames, int16_t *audioSampl
 		}
 		audioSamples[i*2] = doodoo[curFrame*2];
 		audioSamples[i*2+1] = doodoo[curFrame*2+1];
-		curFrame++;
+		static int counter = 0;
+		if (counter >= (1+dead)){
+			counter = 0;
+			curFrame++;
+		}
+		counter++;
 	}
 
-	t3d_clear((color_t){255,0,0,255});
-	t3d_perspective(0.5f*M_PI,(float)screen.width/screen.height,0.01f,100.0f);
-	t3d_load_identity();
-	t3d_translate(0,0,-1.25);
-	static double r = 0.0;
-	r += deltaTime; if (r > 2.0*M_PI) r -= 2.0*M_PI;
-	t3d_rotate(0,1,0,0.5f*M_PI*sin(r));
-	t3d_translate(-0.5f,-0.5f,0.0f);
-	t3d_position(0,0,0); t3d_texcoord(0,0);
-	t3d_position(1,0,0); t3d_texcoord(1,0);
-	t3d_position(1,1,0); t3d_texcoord(1,1);
-	t3d_position(1,1,0); t3d_texcoord(1,1);
-	t3d_position(0,1,0); t3d_texcoord(0,1);
-	t3d_position(0,0,0); t3d_texcoord(0,0);
+	t3d_clear((color_t){0,0,0,255});
+
+	if (playing){
+		t2d_set_destination_image(&screen);
+		t2d_set_source_image(&paddle);
+		t2d_blit(0,0,paddle.width,paddle.height,(int)roundf(LERP(pp[0],pc[0],interpolant)),(int)roundf(LERP(pp[1],pc[1],interpolant)),false);
+		t2d_set_source_image(&ball);
+		t2d_blit(0,0,ball.width,ball.height,(int)roundf(LERP(bp[0],bc[0],interpolant)),(int)roundf(LERP(bp[1],bc[1],interpolant)),false);
+		{
+			int w,h;
+			sprintf(scratch,"%i",score);
+			int len = strlen(scratch);
+			for (int i = 0; i < len; i++){
+				if (scratch[i] == '0') scratch[i] = 'O';
+				else if (scratch[i] == '1') scratch[i] = 'l';
+			}
+			text_get_bounds(scratch,&w,&h);
+			text_set_color(0,1,0);
+			text_draw(SCREEN_WIDTH/2-w/2,5*SCREEN_HEIGHT/6+h/2,scratch);
+		}
+	}
 
 	text_set_target_image(screen.pixels,screen.width,screen.height);
-	text_set_color(1,1,0);
-	int w,h;
-	char *str = "jojfoil hat swagcoin";
-	text_get_bounds(str,&w,&h);
-	text_draw(256-w/2,SCREEN_HEIGHT/2+h/2,str);
+	
+	
+	if (!dead){
+		text_set_color(1,1,0);
+		memcpy(scratch,text[si],ti);
+		scratch[ti] = 0;
+	} else {
+		text_set_color(1,0,0);
+		sprintf(scratch,"Mission failed. Press R to retry.");
+	}
+	{
+		int w,h;
+		text_get_bounds(scratch,&w,&h);
+		text_draw(SCREEN_WIDTH/2-w/2,SCREEN_HEIGHT/2+h/2,scratch);
+	}
 
-	draw_framebuffer((image_t *)&screen,0,0,0);
+	draw_framebuffer((image_t *)&screen,0,0.3f,0);
 }
 
 void init(void){
@@ -96,12 +253,12 @@ void init(void){
 
 int main(int argc, char **argv){
 	t3d_set_framebuffer(&screen);
-	sponge.pixels = load_image(true,&sponge.width,&sponge.height,"res/screenshot.png");
-	t3d_set_texture(&sponge);
-	doodoo = load_audio(&doodooFrames,"res/frequency.mp3");
-	register_font(local_path_to_absolute("res/VanillaExtractRegular.ttf"));
+	paddle.pixels = load_image(true,&paddle.width,&paddle.height,"res/paddle.png");
+	ball.pixels = load_image(true,&ball.width,&ball.height,"res/ball.png");
+	doodoo = load_audio(&doodooFrames,"res/fastBeat9.mp3");
+	register_font(local_path_to_absolute("res/typewriter.ttf"));
 	char fname[256];
-	get_font_name(local_path_to_absolute("res/VanillaExtractRegular.ttf"),fname,sizeof(fname));
-	text_set_font(fname,24);
-    open_window(SCREEN_WIDTH,SCREEN_HEIGHT,"gerald's dilemma");
+	get_font_name(local_path_to_absolute("res/typewriter.ttf"),fname,sizeof(fname));
+	text_set_font(fname,12);
+    open_window(SCREEN_WIDTH,SCREEN_HEIGHT,"Gluten Ball");
 }

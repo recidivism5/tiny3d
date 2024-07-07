@@ -346,7 +346,7 @@ uint64_t get_time(void){
 #include <libswscale/swscale.h>
 #include <libavutil/opt.h>
 
-uint32_t *load_image(bool flip_vertically, int *width, int *height, char *format, ...) {
+unsigned char *load_image(bool flip_vertically, int *width, int *height, char *format, ...){
     va_list args;
     va_start(args,format);
     assertPath = local_path_to_absolute_vararg(format,args);
@@ -444,7 +444,7 @@ uint32_t *load_image(bool flip_vertically, int *width, int *height, char *format
     }
 
     // Allocate RGBA buffer
-    uint32_t *rgba_buffer = (uint32_t *)malloc(frame->width * frame->height * sizeof(uint32_t));
+    unsigned char *rgba_buffer = malloc(frame->width * frame->height * 4);
     if (!rgba_buffer) {
         fprintf(stderr, "Failed to allocate RGBA buffer\n");
         av_frame_free(&frame);
@@ -469,7 +469,7 @@ uint32_t *load_image(bool flip_vertically, int *width, int *height, char *format
     }
 
     uint8_t *rgba_data[1] = { (uint8_t *)rgba_buffer };
-    int rgba_linesize[1] = { frame->width * sizeof(uint32_t) };
+    int rgba_linesize[1] = {frame->width * 4};
     if (flip_vertically){
         frame->data[0] += frame->linesize[0]*(frame->height-1);
         frame->linesize[0] = -frame->linesize[0];
@@ -673,7 +673,12 @@ void text_set_target_image(unsigned char *pixels, int width, int height){
     text_ctx.height = height;
 }
 void text_set_font(char *font_family, int size){
-    text_ctx.font_family = font_family;
+    if (text_ctx.font_family){
+        free(text_ctx.font_family);
+    }
+    int len = strlen(font_family);
+    text_ctx.font_family = malloc(len+1);
+    strcpy(text_ctx.font_family,font_family);
     text_ctx.font_size = size;
 }
 void text_set_color(float r, float g, float b){
@@ -1040,6 +1045,10 @@ void open_window(int min_width, int min_height, char *name){
                 case ButtonPress: switch (event.xbutton.button){
                     case 1: keydown(KEY_MOUSE_LEFT); break;
                     case 3: keydown(KEY_MOUSE_RIGHT); break;
+                } break;
+                case ButtonRelease: switch (event.xbutton.button){
+                    case 1: keyup(KEY_MOUSE_LEFT); break;
+                    case 3: keyup(KEY_MOUSE_RIGHT); break;
                 } break;
                 case MotionNotify: if (!is_mouse_locked()) mousemove(event.xmotion.x,window_height-1-event.xmotion.y); break;
             }

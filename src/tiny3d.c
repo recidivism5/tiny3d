@@ -222,6 +222,15 @@ void get_font_name(char *path, char *out, int outCount){
 				fread(out,ttRecord.uStringLength,1,f);
 				out[ttRecord.uStringLength] = 0;
 				fclose(f);
+				if (ttRecord.uStringLength > 2 && out[0] == 0){
+					char temp[256];
+					ASSERT(ttRecord.uStringLength < 256);
+					for (int i = 0; i < ttRecord.uStringLength/2; i++){
+						temp[i] = out[i*2+1];
+					}
+					memcpy(out,temp,ttRecord.uStringLength/2);
+					out[ttRecord.uStringLength/2] = 0;
+				}
 				return;
 			}
 		}

@@ -49,7 +49,7 @@ void error_box(char *msg){
     MessageBoxA(0,msg,"Error",MB_ICONERROR);
 }
 
-uint32_t *load_image(bool flip_vertically, int *width, int *height, char *format, ...){
+unsigned char *load_image(bool flip_vertically, int *width, int *height, char *format, ...){
     va_list args;
     va_start(args,format);
     assertPath = local_path_to_absolute_vararg(format,args);
@@ -477,9 +477,12 @@ void text_set_target_image(uint32_t *pixels, int width, int height){
 
     ensure_hdcBmp();
 }
-static void text_update_font(){
-    HFONT font = CreateFontA(-gdiImg.fontHeight,0,0,0,FW_DONTCARE,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,
-                CLIP_DEFAULT_PRECIS,ANTIALIASED_QUALITY, VARIABLE_PITCH,gdiImg.fontName);
+void register_font(char *path){
+    ASSERT(1 == AddFontResourceExA(path,FR_PRIVATE,NULL));
+}
+void text_set_font(char *font_family, int size){
+    HFONT font = CreateFontA(size*2,0,0,0,FW_DONTCARE,FALSE,FALSE,FALSE,DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,
+                CLIP_DEFAULT_PRECIS,ANTIALIASED_QUALITY, VARIABLE_PITCH,font_family);
 
     ensure_hdcBmp();
 
@@ -489,15 +492,6 @@ static void text_update_font(){
 	} else {
         DeleteObject(old);
     }
-}
-void text_set_font(char *path){
-    ASSERT(1 == AddFontResourceExA(path,FR_PRIVATE,NULL));
-    get_font_name(path,gdiImg.fontName,COUNT(gdiImg.fontName));
-    text_update_font();
-}
-void text_set_font_height(int height){
-    gdiImg.fontHeight = height;
-    text_update_font();
 }
 void text_set_color(float r, float g, float b){
     SetTextColor(gdiImg.hdcBmp,RGB((int)(255*r),(int)(255*g),(int)(255*b)));
