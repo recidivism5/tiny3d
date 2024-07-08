@@ -237,7 +237,6 @@ void update(double time, double deltaTime, int nAudioFrames, int16_t *audioSampl
 	} else {
 		text_set_color(1,0,0);
 		sprintf(scratch,"Mission failed. Press R to retry.");
-		ASSERT(0 && "dab");
 	}
 	{
 		int w,h;
