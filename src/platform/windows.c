@@ -19,6 +19,8 @@
 #include <mmdeviceapi.h>
 #include <audioclient.h>
 
+HWND gwnd;
+
 static const GUID _CLSID_MMDeviceEnumerator = {0xbcde0395, 0xe52f, 0x467c, {0x8e,0x3d, 0xc4,0x57,0x92,0x91,0x69,0x2e}};
 static const GUID _IID_IMMDeviceEnumerator = {0xa95664d2, 0x9614, 0x4f35, {0xa7,0x46, 0xde,0x8d,0xb6,0x36,0x17,0xe6}};
 static const GUID _IID_IAudioClient = {0x1cb9ad4c, 0xdbfa, 0x4c32, {0xb1,0x78, 0xc2,0xf5,0x68,0xa7,0x03,0xb2}};
@@ -46,6 +48,7 @@ void safe_mfstartup(void){
 }
 
 void error_box(char *msg){
+    ValidateRect(gwnd,0);
     MessageBoxA(0,msg,"Error",MB_ICONERROR);
 }
 
@@ -538,7 +541,6 @@ void text_draw(int x, int y, char *str){
     DeleteObject(hbm);
 }
 
-HWND gwnd;
 void captureMouse(){
     RECT r;
     GetClientRect(gwnd,&r);
