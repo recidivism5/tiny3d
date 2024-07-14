@@ -69,7 +69,7 @@ char *text[] = {
 };
 
 char scratch[256];
-int si = 16, ti = 0;
+int si = 0, ti = 0;
 int score;
 
 bool playing = false;
